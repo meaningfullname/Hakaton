@@ -28,36 +28,68 @@ const generateToken = (userId) => {
  *         email:
  *           type: string
  *           description: The email of the user
+ *         firstName:
+ *           type: string
+ *           description: First name of the user
+ *         lastName:
+ *           type: string
+ *           description: Last name of the user
+ *         studentId:
+ *           type: string
+ *           description: Student ID (for students only)
+ *         gender:
+ *           type: string
+ *           enum: [male, female, other]
+ *           description: Gender of the user
+ *         customGender:
+ *           type: string
+ *           description: Custom gender (when gender is 'other')
+ *         dateOfBirth:
+ *           type: string
+ *           format: date
+ *           description: Date of birth
+ *         phoneNumber:
+ *           type: string
+ *           description: Phone number
+ *         address:
+ *           type: object
+ *           properties:
+ *             street:
+ *               type: string
+ *             city:
+ *               type: string
+ *             state:
+ *               type: string
+ *             zipCode:
+ *               type: string
+ *             country:
+ *               type: string
  *         role:
  *           type: string
- *           enum: [user, admin]
+ *           enum: [student, admin]
  *           description: The role of the user
  *         isActive:
  *           type: boolean
  *           description: Whether the user is active
+ *         faculty:
+ *           type: string
+ *           description: Faculty (for students only)
+ *         course:
+ *           type: number
+ *           description: Course number (for students only)
+ *         specialization:
+ *           type: string
+ *           description: Specialization (for students only)
+ *         enrollmentDate:
+ *           type: string
+ *           format: date-time
+ *           description: Enrollment date (for students only)
  *         createdAt:
  *           type: string
  *           format: date-time
  *         updatedAt:
  *           type: string
  *           format: date-time
- *     RegisterRequest:
- *       type: object
- *       required:
- *         - username
- *         - email
- *         - password
- *       properties:
- *         username:
- *           type: string
- *           minLength: 3
- *           maxLength: 30
- *         email:
- *           type: string
- *           format: email
- *         password:
- *           type: string
- *           minLength: 6
  *     LoginRequest:
  *       type: object
  *       required:
@@ -66,6 +98,7 @@ const generateToken = (userId) => {
  *       properties:
  *         username:
  *           type: string
+ *           description: Username, email, or student ID
  *         password:
  *           type: string
  *     AuthResponse:
@@ -81,82 +114,9 @@ const generateToken = (userId) => {
 
 /**
  * @swagger
- * /api/auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RegisterRequest'
- *     responses:
- *       201:
- *         description: User registered successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
- *       400:
- *         description: Bad request - validation error or user already exists
- *       500:
- *         description: Internal server error
- */
-router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ 
-      message: "Username, email and password are required" 
-    });
-  }
-
-  if (password.length < 6) {
-    return res.status(400).json({ 
-      message: "Password must be at least 6 characters long" 
-    });
-  }
-
-  try {
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
-
-    if (existingUser) {
-      return res.status(400).json({ 
-        message: "Username or email already exists" 
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = new User({ 
-      username, 
-      email, 
-      password: hashedPassword 
-    });
-    
-    await newUser.save();
-
-    const token = generateToken(newUser._id);
-
-    res.status(201).json({
-      message: "Registration successful",
-      token,
-      user: newUser,
-    });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-/**
- * @swagger
  * /api/auth/login:
  *   post:
- *     summary: Login user
+ *     summary: Login user (students and admins)
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -186,14 +146,19 @@ router.post("/login", async (req, res) => {
   }
 
   try {
+    // Allow login with username, email, or student ID
     const user = await User.findOne({ 
-      $or: [{ username }, { email: username }],
+      $or: [
+        { username }, 
+        { email: username },
+        { studentId: username }
+      ],
       isActive: true 
     });
 
     if (!user) {
       return res.status(400).json({
-        message: "Invalid username or password",
+        message: "Invalid credentials",
       });
     }
 
@@ -201,7 +166,7 @@ router.post("/login", async (req, res) => {
     
     if (!isPasswordValid) {
       return res.status(400).json({
-        message: "Invalid username or password",
+        message: "Invalid credentials",
       });
     }
 
@@ -271,6 +236,76 @@ router.post("/refresh", authenticateToken, async (req, res) => {
     message: "Token refreshed successfully",
     token,
   });
+});
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Change user password
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 6
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Invalid current password or validation error
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/change-password", authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      message: "Current password and new password are required",
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({
+      message: "New password must be at least 6 characters long",
+    });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+    await User.findByIdAndUpdate(req.user._id, { password: hashedNewPassword });
+
+    res.json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 });
 
 module.exports = router;
