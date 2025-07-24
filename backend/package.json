@@ -1,12 +1,22 @@
 {
-  "name": "auth-system",
+  "name": "student-management-system",
   "version": "1.0.0",
-  "description": "Authentication system with JWT and MongoDB",
+  "description": "A comprehensive student management system with JWT authentication and role-based access control",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "create-admin": "node scripts/createAdmin.js",
+    "create-admin-help": "node scripts/createAdmin.js --help"
   },
+  "keywords": [
+    "student-management",
+    "authentication",
+    "jwt",
+    "mongodb",
+    "express",
+    "admin-panel"
+  ],
   "dependencies": {
     "express": "^4.18.2",
     "mongoose": "^7.5.0",
@@ -15,9 +25,15 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
-  }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "Team 12",
+  "license": "MIT"
 }
