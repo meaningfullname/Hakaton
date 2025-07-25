@@ -1,0 +1,524 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-do List</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        header{
+            position:absolute;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+    
+            width: 100%;
+            background: #0f5eb9;
+        
+
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #d8dae7 0%, #0f5eb9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        input[type="text"], input[type="datetime-local"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        #taskInput {
+            flex: 2;
+            min-width: 200px;
+        }
+        
+        #deadlineInput {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        .board {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+        }
+        
+        .column {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 400px;
+            min-width: 300px;
+            flex: 1;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .column h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 1.2em;
+        }
+        
+        .todo h2 { background: #6c757d; }
+        .doing h2 { background: #17a2b8; }
+        .done h2 { background: #28a745; }
+        .outdated h2 { background: #dc3545; }
+        
+        .task-card {
+            background: white;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s;
+        }
+        
+        .task-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .task-card.outdated {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .task-card.done {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        .task-card.doing {
+            border-left-color: #17a2b8;
+            background: #f0f9ff;
+        }
+        
+        .task-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .task-times {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .task-times div {
+            margin: 3px 0;
+        }
+        
+        .deadline {
+            font-weight: bold;
+        }
+        
+        .deadline.overdue {
+            color: #dc3545;
+        }
+        
+        .task-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .task-buttons button {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        .start-btn { background: #17a2b8; }
+        .complete-btn { background: #28a745; }
+        .todo-btn { background: #6c757d; }
+        .delete-btn { background: #dc3545; }
+        
+        .start-btn:hover { background: #138496; }
+        .complete-btn:hover { background: #1e7e34; }
+        .todo-btn:hover { background: #545b62; }
+        .delete-btn:hover { background: #c82333; }
+        
+        @media (max-width: 768px) {
+            .input-row {
+                flex-direction: column;
+            }
+            
+            #taskInput, #deadlineInput {
+                width: 100%;
+            }
+            
+            .board {
+                flex-direction: column;
+            }
+            
+            .column {
+                min-width: auto;
+            }
+        }
+        .mode-selector {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.mode-selector button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    background: #ddd;
+}
+
+.mode-selector button.active {
+    background: #667eea;
+    color: white;
+}
+
+.hidden {
+    display: none;
+}
+    </style>
+</head>
+<body>
+    <header><div class="logo5">
+        <img src="coventry100.svg"/>
+        </div>
+    </header>
+        
+    <div class="container">
+        <h1>Task Board</h1>
+        <div class="mode-selector">
+    <h3>Choose Mode:</h3>
+    <button id="personalModeBtn" onclick="switchToPersonal()" class="active">Personal Mode</button>
+    <button id="teamModeBtn" onclick="switchToTeam()">Team Mode</button>
+</div>
+
+<div id="teamSection" class="hidden">
+    <h3>Team Settings</h3>
+    <input type="text" id="userNameInput" placeholder="Your name">
+    <input type="text" id="teamIdInput" placeholder="Team ID">
+    <button onclick="joinTeam()">Join/Create Team</button>
+    <button onclick="leaveTeam()">Leave Team</button>
+    <div id="teamDisplay" class="hidden">
+        <strong>Team:</strong> <span id="currentTeamId"></span> | 
+        <strong>User:</strong> <span id="currentUser"></span>
+    </div>
+</div>
+        
+        <div class="input-section">
+            <div class="input-row">
+                <input type="text" id="taskInput" placeholder="Enter a new task...">
+                <input type="datetime-local" id="deadlineInput">
+                <button onclick="addTask()">Add Task</button>
+            </div>
+        </div>
+        
+        <div class="board">
+            <div class="column todo">
+                <h2>To Do</h2>
+                <div id="todoList"></div>
+            </div>
+            
+            <div class="column doing">
+                <h2>Doing</h2>
+                <div id="doingList"></div>
+            </div>
+            
+            <div class="column done">
+                <h2>Done</h2>
+                <div id="doneList"></div>
+            </div>
+            
+            <div class="column outdated">
+                <h2>Outdated</h2>
+                <div id="outdatedList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+let mode = 'personal'; 
+let personalTasks = [];
+let teamData = {};
+let currentTeam = null;
+let currentUser = null;
+
+function switchToPersonal() {
+    mode = 'personal';
+    document.getElementById('personalModeBtn').classList.add('active');
+    document.getElementById('teamModeBtn').classList.remove('active');
+    document.getElementById('teamSection').classList.add('hidden');
+    renderTasks();
+}
+
+function switchToTeam() {
+    mode = 'team';
+    document.getElementById('teamModeBtn').classList.add('active');
+    document.getElementById('personalModeBtn').classList.remove('active');
+    document.getElementById('teamSection').classList.remove('hidden');
+}
+
+function joinTeam() {
+    const userName = document.getElementById('userNameInput').value.trim();
+    const teamId = document.getElementById('teamIdInput').value.trim();
+    
+    if (!userName || !teamId) {
+        alert('Please enter both name and team ID');
+        return;
+    }
+    
+    currentUser = userName;
+    currentTeam = teamId;
+    
+    if (!teamData[teamId]) {
+        teamData[teamId] = { tasks: [] };
+    }
+    
+    document.getElementById('teamDisplay').classList.remove('hidden');
+    document.getElementById('currentTeamId').textContent = teamId;
+    document.getElementById('currentUser').textContent = userName;
+    
+    saveData();
+    renderTasks();
+}
+
+function leaveTeam() {
+    currentTeam = null;
+    currentUser = null;
+    document.getElementById('teamDisplay').classList.add('hidden');
+    renderTasks();
+}
+        let tasks = [];
+        let taskIdCounter = 1;
+        
+  function addTask() {
+    const taskInput = document.getElementById('taskInput');
+    const deadlineInput = document.getElementById('deadlineInput');
+    
+    const taskText = taskInput.value.trim();
+    const deadline = deadlineInput.value;
+    
+    if (taskText === '') {
+        alert('Please enter a task!');
+        return;
+    }
+    
+    const newTask = {  // Changed from 'task' to 'newTask'
+        id: taskIdCounter++,
+        text: taskText,
+        deadline: deadline,
+        createdAt: new Date(),
+        status: 'todo'
+    };
+    
+    if (mode === 'personal') {
+        personalTasks.push(newTask);  // Use 'newTask' here too
+    } else if (mode === 'team' && currentTeam) {
+        newTask.createdBy = currentUser;  // And here
+        teamData[currentTeam].tasks.push(newTask);  // And here
+    }
+    
+    taskInput.value = '';
+    deadlineInput.value = '';
+    
+    saveData();
+    renderTasks();
+}
+        
+        
+        function formatDateTime(date) {
+            return new Date(date).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function isOverdue(deadline) {
+            if (!deadline) return false;
+            return new Date(deadline) < new Date();
+        }
+        
+        function moveTask(taskId, newStatus) {
+             let tasks = mode === 'personal' ? personalTasks : 
+                (currentTeam ? teamData[currentTeam].tasks : []);
+    
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+        task.status = newStatus;
+        if (newStatus === 'done') {
+            task.completedAt = new Date();
+        }
+        saveData();
+        renderTasks();
+    }
+        }
+        
+        function deleteTask(taskId) {
+             if (mode === "personal") {
+                personalTasks = personalTasks.filter(t => t.id !== taskId);
+            } else if (mode === 'team' && currentTeam) {
+                 teamData[currentTeam].tasks = teamData[currentTeam].tasks.filter(t => t.id !== taskId);
+            }
+    
+            saveData();
+            renderTasks();
+        }
+        
+        function createTaskCard(task) {
+            const isTaskOverdue = task.deadline && isOverdue(task.deadline) && task.status !== 'done';
+            const cardClass = isTaskOverdue ? 'task-card outdated' : `task-card ${task.status}`;
+            
+            let buttons = '';
+            if (task.status === 'todo') {
+                buttons = `
+                    <button class="start-btn" onclick="moveTask(${task.id}, 'doing')">Start</button>
+                    <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+                `;
+            } else if (task.status === 'doing') {
+                buttons = `
+                    <button class="complete-btn" onclick="moveTask(${task.id}, 'done')">Complete</button>
+                    <button class="todo-btn" onclick="moveTask(${task.id}, 'todo')">Back to Todo</button>
+                    <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+                `;
+            } else if (task.status === 'done') {
+                buttons = `
+                    <button class="todo-btn" onclick="moveTask(${task.id}, 'todo')">Reopen</button>
+                    <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+                `;
+            }
+            
+            const deadlineClass = isTaskOverdue ? 'deadline overdue' : 'deadline';
+            
+            return `
+                <div class="${cardClass}">
+                    <div class="task-title">${task.text}</div>
+                    <div class="task-times">
+                        <div>Created: ${formatDateTime(task.createdAt)}</div>
+                        ${task.deadline ? `<div class="${deadlineClass}">Deadline: ${formatDateTime(task.deadline)}</div>` : ''}
+                        ${task.completedAt ? `<div>Completed: ${formatDateTime(task.completedAt)}</div>` : ''}
+                    </div>
+                    <div class="task-buttons">
+                        ${buttons}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderTasks() {
+             let tasks = mode === 'personal' ? personalTasks : 
+                (currentTeam ? teamData[currentTeam].tasks : []);
+            const todoList = document.getElementById('todoList');
+            const doingList = document.getElementById('doingList');
+            const doneList = document.getElementById('doneList');
+            const outdatedList = document.getElementById('outdatedList');
+            
+            todoList.innerHTML = '';
+            doingList.innerHTML = '';
+            doneList.innerHTML = '';
+            outdatedList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const taskCard = createTaskCard(task);
+                const isTaskOverdue = task.deadline && isOverdue(task.deadline) && task.status !== 'done';
+                
+                if (isTaskOverdue) {
+                    outdatedList.innerHTML += taskCard;
+                } else if (task.status === 'todo') {
+                    todoList.innerHTML += taskCard;
+                } else if (task.status === 'doing') {
+                    doingList.innerHTML += taskCard;
+                } else if (task.status === 'done') {
+                    doneList.innerHTML += taskCard;
+                }
+            });
+        }
+        
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+        
+        // Add a sample task
+        tasks.push({
+            id: taskIdCounter++,
+            text: 'Sample Task - Try moving it around!',
+            deadline: '',
+            createdAt: new Date(),
+            status: 'todo'
+        });
+        
+        renderTasks();
+        function saveData() {
+    localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
+    localStorage.setItem('teamData', JSON.stringify(teamData));
+}
+
+function loadData() {
+    const savedPersonal = localStorage.getItem('personalTasks');
+    const savedTeam = localStorage.getItem('teamData');
+    
+    if (savedPersonal) personalTasks = JSON.parse(savedPersonal);
+    if (savedTeam) teamData = JSON.parse(savedTeam);
+}
+      loadData();
+    </script>
+</body>
+</html>

@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Student Management System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -19,7 +13,6 @@
             align-items: center;
             justify-content: center;
         }
-        
         .container {
             background: white;
             padding: 2rem;
@@ -28,34 +21,28 @@
             width: 100%;
             max-width: 400px;
         }
-        
         .logo {
             text-align: center;
             margin-bottom: 2rem;
         }
-        
         .logo h1 {
             color: #333;
             margin-bottom: 0.5rem;
             font-size: 1.8rem;
         }
-        
         .logo p {
             color: #666;
             font-size: 0.9rem;
         }
-        
         .form-group {
             margin-bottom: 1rem;
         }
-        
         label {
             display: block;
             margin-bottom: 0.5rem;
             color: #555;
             font-weight: 500;
         }
-        
         input {
             width: 100%;
             padding: 0.8rem;
@@ -64,13 +51,11 @@
             font-size: 1rem;
             transition: border-color 0.3s;
         }
-        
         input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
         }
-        
         button {
             width: 100%;
             background: #667eea;
@@ -83,31 +68,26 @@
             transition: background 0.3s;
             font-weight: 500;
         }
-        
         button:hover:not(:disabled) {
             background: #5a6fd8;
         }
-        
         button:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
-        
         .links {
             text-align: center;
             margin-top: 1.5rem;
         }
-        
         .links a {
             color: #667eea;
             text-decoration: none;
             font-size: 0.9rem;
+            margin: 0 0.5rem;
         }
-        
         .links a:hover {
             text-decoration: underline;
         }
-        
         .error {
             background: #f8d7da;
             color: #721c24;
@@ -117,7 +97,6 @@
             display: none;
             border: 1px solid #f5c6cb;
         }
-        
         .success {
             background: #d4edda;
             color: #155724;
@@ -127,47 +106,6 @@
             display: none;
             border: 1px solid #c3e6cb;
         }
-        
-        .login-info {
-            background: #e3f2fd;
-            color: #1565c0;
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            border: 1px solid #bbdefb;
-        }
-        
-        .login-info h4 {
-            margin-bottom: 0.5rem;
-            color: #0d47a1;
-        }
-        
-        .login-info p {
-            margin-bottom: 0.3rem;
-        }
-        
-        .spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
@@ -176,156 +114,96 @@
             <h1>Student Management System</h1>
             <p>University of Astana</p>
         </div>
-        
-        <div class="login-info">
-            <h4>Login Information:</h4>
-            <p><strong>Students:</strong> Use your Student ID, username, or email</p>
-            <p><strong>Administrators:</strong> Use your admin credentials</p>
-        </div>
-        
         <div id="error" class="error"></div>
         <div id="success" class="success"></div>
-        
         <form id="loginForm">
             <div class="form-group">
                 <label for="username">Student ID / Username / Email:</label>
-                <input type="text" id="username" name="username" required 
-                       placeholder="Enter your student ID, username, or email">
+                <input type="text" id="username" name="username" required placeholder="Enter your student ID, username, or email">
             </div>
-            
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required
-                       placeholder="Enter your password">
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
             </div>
-            
-            <button type="submit" id="loginBtn">
-                <span class="spinner" id="spinner"></span>
-                <span id="btnText">Login</span>
-            </button>
+            <button type="submit" id="loginBtn">Login</button>
         </form>
-        
         <div class="links">
-            <p><a href="/api-docs">API Documentation</a></p>
+            <a href="/index.html">Home</a>
+            <a href="/api-docs" target="_blank">API Docs</a>
         </div>
     </div>
-
     <script>
         const loginForm = document.getElementById('loginForm');
         const errorDiv = document.getElementById('error');
         const successDiv = document.getElementById('success');
         const loginBtn = document.getElementById('loginBtn');
-        const spinner = document.getElementById('spinner');
-        const btnText = document.getElementById('btnText');
-        
         function showError(message) {
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
             successDiv.style.display = 'none';
         }
-        
         function showSuccess(message) {
             successDiv.textContent = message;
             successDiv.style.display = 'block';
             errorDiv.style.display = 'none';
         }
-        
-        function setLoading(loading) {
-            if (loading) {
-                loginBtn.disabled = true;
-                spinner.style.display = 'inline-block';
-                btnText.textContent = 'Logging in...';
-            } else {
-                loginBtn.disabled = false;
-                spinner.style.display = 'none';
-                btnText.textContent = 'Login';
-            }
-        }
-        
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            setLoading(true);
-            
+            loginBtn.disabled = true;
             const formData = new FormData(loginForm);
             const loginData = {
                 username: formData.get('username').trim(),
                 password: formData.get('password')
             };
-            
             if (!loginData.username || !loginData.password) {
                 showError('Please fill in all fields');
-                setLoading(false);
+                loginBtn.disabled = false;
                 return;
             }
-            
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loginData)
                 });
-                
                 const data = await response.json();
-                
                 if (response.ok) {
                     localStorage.setItem('authToken', data.token);
                     showSuccess('Login successful! Redirecting...');
-                    
-                    // Redirect based on user role
                     setTimeout(() => {
                         if (data.user.role === 'admin') {
-                            window.location.href = '/admin';
+                            window.location.href = '/admin.html';
                         } else {
-                            window.location.href = '/dashboard';
+                            window.location.href = '/dashboard.html';
                         }
                     }, 1000);
                 } else {
                     showError(data.message || 'Login failed');
-                    setLoading(false);
+                    loginBtn.disabled = false;
                 }
             } catch (error) {
-                console.error('Login error:', error);
                 showError('Network error. Please check your connection and try again.');
-                setLoading(false);
+                loginBtn.disabled = false;
             }
         });
-        
         // Check if user is already logged in
         const token = localStorage.getItem('authToken');
         if (token) {
-            setLoading(true);
             fetch('/api/auth/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Token invalid');
-            })
+            .then(response => response.ok ? response.json() : Promise.reject())
             .then(user => {
                 if (user.role === 'admin') {
-                    window.location.href = '/admin';
+                    window.location.href = '/admin.html';
                 } else {
-                    window.location.href = '/dashboard';
+                    window.location.href = '/dashboard.html';
                 }
             })
             .catch(() => {
                 localStorage.removeItem('authToken');
-                setLoading(false);
             });
         }
-        
-        // Add Enter key support
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                loginForm.dispatchEvent(new Event('submit'));
-            }
-        });
     </script>
 </body>
 </html>

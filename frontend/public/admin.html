@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Student Management</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            background: white;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .stat {
+            background: #f8f9fa;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            min-width: 180px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+        }
+        .students-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+        .students-table th, .students-table td {
+            border: 1px solid #ddd;
+            padding: 0.5rem 1rem;
+            text-align: left;
+        }
+        .students-table th {
+            background: #667eea;
+            color: white;
+        }
+        .students-table tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        .actions button {
+            margin-right: 0.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.3rem 0.7rem;
+            cursor: pointer;
+        }
+        .actions button.delete {
+            background: #dc3545;
+        }
+        .actions button.edit {
+            background: #ffc107;
+            color: #333;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.5rem 1.2rem;
+            cursor: pointer;
+            float: right;
+        }
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.3rem;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error, .success {
+            margin-bottom: 1rem;
+            padding: 0.7rem;
+            border-radius: 5px;
+            display: none;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        <h1>Admin Panel</h1>
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        <h2>System Statistics</h2>
+        <div class="stats" id="stats"></div>
+        <h2>Students</h2>
+        <div class="form-section">
+            <form id="studentForm">
+                <input type="hidden" id="studentId" name="studentId">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentIdField">Student ID</label>
+                    <input type="text" id="studentIdField" name="studentIdField" required>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender" required>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customGenderGroup" style="display:none;">
+                    <label for="customGender">Custom Gender</label>
+                    <input type="text" id="customGender" name="customGender">
+                </div>
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth</label>
+                    <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+                </div>
+                <div class="form-group">
+                    <label for="faculty">Faculty</label>
+                    <input type="text" id="faculty" name="faculty" required>
+                </div>
+                <div class="form-group">
+                    <label for="course">Course</label>
+                    <input type="number" id="course" name="course" min="1" max="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="specialization">Specialization</label>
+                    <input type="text" id="specialization" name="specialization" required>
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number</label>
+                    <input type="text" id="phoneNumber" name="phoneNumber">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="addressStreet" name="addressStreet" placeholder="Street">
+                    <input type="text" id="addressCity" name="addressCity" placeholder="City">
+                    <input type="text" id="addressState" name="addressState" placeholder="State">
+                    <input type="text" id="addressZipCode" name="addressZipCode" placeholder="Zip Code">
+                    <input type="text" id="addressCountry" name="addressCountry" placeholder="Country">
+                </div>
+                <button type="submit" id="submitBtn">Add Student</button>
+                <button type="button" id="cancelEditBtn" style="display:none;">Cancel Edit</button>
+            </form>
+        </div>
+        <table class="students-table" id="studentsTable">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Faculty</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="studentsBody"></tbody>
+        </table>
+    </div>
+    <script>
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = '/login';
+        }
+        // UI helpers
+        function showError(msg) {
+            const err = document.getElementById('error');
+            err.textContent = msg;
+            err.style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+        function showSuccess(msg) {
+            const succ = document.getElementById('success');
+            succ.textContent = msg;
+            succ.style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+        function clearMessages() {
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+        }
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        }
+        // Gender custom field
+        document.getElementById('gender').addEventListener('change', function() {
+            document.getElementById('customGenderGroup').style.display = this.value === 'other' ? 'block' : 'none';
+        });
+        // Load stats
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load stats');
+                const stats = await res.json();
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat"><strong>Total:</strong><br>${stats.total}</div>
+                    <div class="stat"><strong>Active:</strong><br>${stats.active}</div>
+                    <div class="stat"><strong>Inactive:</strong><br>${stats.inactive}</div>
+                    <div class="stat"><strong>Male:</strong><br>${stats.male}</div>
+                    <div class="stat"><strong>Female:</strong><br>${stats.female}</div>
+                    <div class="stat"><strong>Other:</strong><br>${stats.other}</div>
+                `;
+            } catch (e) { showError(e.message); }
+        }
+        // Load students
+        async function loadStudents() {
+            try {
+                const res = await fetch('/api/admin/students?limit=50', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to load students');
+                const data = await res.json();
+                const students = data.students || [];
+                const tbody = document.getElementById('studentsBody');
+                tbody.innerHTML = '';
+                students.forEach(st => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${st.username}</td>
+                            <td>${st.email}</td>
+                            <td>${st.studentId}</td>
+                            <td>${st.firstName} ${st.lastName}</td>
+                            <td>${st.faculty}</td>
+                            <td>${st.course}</td>
+                            <td>${st.isActive ? 'Active' : 'Inactive'}</td>
+                            <td class="actions">
+                                <button class="edit" onclick='editStudent(${JSON.stringify(st)})'>Edit</button>
+                                <button class="delete" onclick='deleteStudent("${st._id}")'>Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { showError(e.message); }
+        }
+        // Add/Edit student
+        const studentForm = document.getElementById('studentForm');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        let editingId = null;
+        studentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearMessages();
+            const formData = new FormData(studentForm);
+            const student = {
+                username: formData.get('username'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                studentId: formData.get('studentIdField'),
+                gender: formData.get('gender'),
+                customGender: formData.get('customGender'),
+                dateOfBirth: formData.get('dateOfBirth'),
+                faculty: formData.get('faculty'),
+                course: formData.get('course'),
+                specialization: formData.get('specialization'),
+                phoneNumber: formData.get('phoneNumber'),
+            };
+            // Address (собираем из отдельных полей)
+            const address = {
+                street: formData.get('addressStreet'),
+                city: formData.get('addressCity'),
+                state: formData.get('addressState'),
+                zipCode: formData.get('addressZipCode'),
+                country: formData.get('addressCountry'),
+            };
+            // Если хотя бы одно поле адреса заполнено, добавляем address
+            if (Object.values(address).some(v => v && v.trim() !== '')) {
+                student.address = address;
+            }
+            // Remove empty customGender if not needed
+            if (student.gender !== 'other') delete student.customGender;
+            // Add or update
+            try {
+                let res;
+                if (editingId) {
+                    // Edit (PUT)
+                    res = await fetch(`/api/admin/students/${editingId}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(student)
+                    });
+                } else {
+                    // Add (POST)
+                    res = await fetch('/api/admin/students', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(student)
+                    });
+                }
+                const data = await res.json();
+                if (res.ok) {
+                    showSuccess(editingId ? 'Student updated' : 'Student added');
+                    studentForm.reset();
+                    editingId = null;
+                    cancelEditBtn.style.display = 'none';
+                    document.getElementById('submitBtn').textContent = 'Add Student';
+                    loadStudents();
+                } else {
+                    showError(data.message || 'Error');
+                }
+            } catch (e) { showError(e.message); }
+        });
+        // Edit student
+        window.editStudent = function(st) {
+            editingId = st._id;
+            document.getElementById('username').value = st.username;
+            document.getElementById('email').value = st.email;
+            document.getElementById('password').value = '';
+            document.getElementById('firstName').value = st.firstName;
+            document.getElementById('lastName').value = st.lastName;
+            document.getElementById('studentIdField').value = st.studentId;
+            document.getElementById('gender').value = st.gender;
+            document.getElementById('customGender').value = st.customGender || '';
+            document.getElementById('dateOfBirth').value = st.dateOfBirth ? st.dateOfBirth.substr(0,10) : '';
+            document.getElementById('faculty').value = st.faculty;
+            document.getElementById('course').value = st.course;
+            document.getElementById('specialization').value = st.specialization;
+            document.getElementById('phoneNumber').value = st.phoneNumber || '';
+            // Заполняем адрес
+            document.getElementById('addressStreet').value = st.address && st.address.street ? st.address.street : '';
+            document.getElementById('addressCity').value = st.address && st.address.city ? st.address.city : '';
+            document.getElementById('addressState').value = st.address && st.address.state ? st.address.state : '';
+            document.getElementById('addressZipCode').value = st.address && st.address.zipCode ? st.address.zipCode : '';
+            document.getElementById('addressCountry').value = st.address && st.address.country ? st.address.country : '';
+            cancelEditBtn.style.display = 'inline-block';
+            document.getElementById('submitBtn').textContent = 'Update Student';
+            if (st.gender === 'other') document.getElementById('customGenderGroup').style.display = 'block';
+            else document.getElementById('customGenderGroup').style.display = 'none';
+        }
+        // Cancel edit
+        cancelEditBtn.addEventListener('click', function() {
+            editingId = null;
+            studentForm.reset();
+            cancelEditBtn.style.display = 'none';
+            document.getElementById('submitBtn').textContent = 'Add Student';
+            document.getElementById('customGenderGroup').style.display = 'none';
+            // Очищаем адрес
+            document.getElementById('addressStreet').value = '';
+            document.getElementById('addressCity').value = '';
+            document.getElementById('addressState').value = '';
+            document.getElementById('addressZipCode').value = '';
+            document.getElementById('addressCountry').value = '';
+        });
+        // Delete student
+        window.deleteStudent = async function(id) {
+            if (!confirm('Delete this student?')) return;
+            try {
+                const res = await fetch(`/api/admin/students/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showSuccess('Student deleted');
+                    loadStudents();
+                } else {
+                    showError(data.message || 'Error');
+                }
+            } catch (e) { showError(e.message); }
+        }
+        // Initial load
+        loadStats();
+        loadStudents();
+    </script>
+</body>
+</html> 

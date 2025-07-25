@@ -3,14 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auth System Dashboard</title>
+    <title>Welcome - Student Management System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -19,30 +13,23 @@
             align-items: center;
             justify-content: center;
         }
-        
         .container {
             background: white;
-            padding: 2rem;
+            padding: 2rem 3rem;
             border-radius: 10px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             text-align: center;
-            max-width: 600px;
+            max-width: 500px;
             width: 90%;
         }
-        
         h1 {
             color: #333;
             margin-bottom: 1rem;
         }
-        
-        .user-info {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            text-align: left;
+        .desc {
+            color: #555;
+            margin-bottom: 2rem;
         }
-        
         .buttons {
             display: flex;
             gap: 1rem;
@@ -50,8 +37,7 @@
             flex-wrap: wrap;
             margin-top: 2rem;
         }
-        
-        button, .btn {
+        .btn {
             background: #667eea;
             color: white;
             padding: 0.8rem 1.5rem;
@@ -61,143 +47,65 @@
             text-decoration: none;
             display: inline-block;
             transition: background 0.3s;
+            font-size: 1rem;
         }
-        
-        button:hover, .btn:hover {
+        .btn:hover {
             background: #5a6fd8;
         }
-        
         .logout-btn {
             background: #dc3545;
         }
-        
         .logout-btn:hover {
             background: #c82333;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .error {
-            color: #dc3545;
-            margin: 1rem 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="loading">Loading...</div>
-        
-        <div id="dashboard" class="hidden">
-            <h1>Welcome to Dashboard</h1>
-            <div id="userInfo" class="user-info"></div>
-            
-            <div class="buttons">
-                <button onclick="refreshToken()">Refresh Token</button>
+        <h1>Welcome to Student Management System</h1>
+        <div class="desc">A simple authentication and student management system.<br>University of Astana</div>
+        <div id="authButtons" class="buttons"></div>
+        <div style="margin-top:2rem;">
                 <a href="/api-docs" class="btn" target="_blank">API Documentation</a>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
         </div>
-        
-        <div id="loginPrompt" class="hidden">
-            <h1>Authentication Required</h1>
-            <p>Please log in to access the dashboard.</p>
-            <div class="buttons">
-                <a href="/login" class="btn">Login</a>
-                <a href="/register" class="btn">Register</a>
-            </div>
-        </div>
-        
-        <div id="error" class="error hidden"></div>
     </div>
-
     <script>
-        const token = localStorage.getItem('authToken');
-        
-        async function loadDashboard() {
-            if (!token) {
-                showLoginPrompt();
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/auth/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const user = await response.json();
-                    showDashboard(user);
+        function renderButtons(user) {
+            const container = document.getElementById('authButtons');
+            container.innerHTML = '';
+            if (!user) {
+                container.innerHTML = `
+                    <a href="/login.html" class="btn">Login</a>
+                `;
                 } else {
-                    localStorage.removeItem('authToken');
-                    showLoginPrompt();
-                }
-            } catch (error) {
-                showError('Failed to load user profile');
-                showLoginPrompt();
+                container.innerHTML = `
+                    <a href="/dashboard.html" class="btn">Dashboard</a>
+                    ${user.role === 'admin' ? '<a href="/admin.html" class="btn">Admin Panel</a>' : ''}
+                    <button class="btn logout-btn" onclick="logout()">Logout</button>
+                `;
             }
         }
-        
-        function showDashboard(user) {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('loginPrompt').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            
-            document.getElementById('userInfo').innerHTML = `
-                <h3>User Information</h3>
-                <p><strong>Username:</strong> ${user.username}</p>
-                <p><strong>Email:</strong> ${user.email}</p>
-                <p><strong>Role:</strong> ${user.role}</p>
-                <p><strong>Status:</strong> ${user.isActive ? 'Active' : 'Inactive'}</p>
-                <p><strong>Member since:</strong> ${new Date(user.createdAt).toLocaleDateString()}</p>
-            `;
-        }
-        
-        function showLoginPrompt() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loginPrompt').classList.remove('hidden');
-        }
-        
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-        }
-        
-        async function refreshToken() {
-            try {
-                const response = await fetch('/api/auth/refresh', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('authToken', data.token);
-                    alert('Token refreshed successfully!');
-                } else {
-                    showError('Failed to refresh token');
-                }
-            } catch (error) {
-                showError('Failed to refresh token');
-            }
-        }
-        
         function logout() {
             localStorage.removeItem('authToken');
-            window.location.href = '/login';
+            window.location.reload();
         }
-        
-        // Load dashboard on page load
-        loadDashboard();
+        // Check auth
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            fetch('/api/auth/profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => response.ok ? response.json() : Promise.reject())
+            .then(user => {
+                renderButtons(user);
+            })
+            .catch(() => {
+                localStorage.removeItem('authToken');
+                renderButtons(null);
+            });
+        } else {
+            renderButtons(null);
+        }
     </script>
 </body>
 </html>

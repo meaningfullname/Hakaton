@@ -8,6 +8,7 @@ const { connectMainDB } = require("./config/config");
 
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
@@ -50,7 +51,7 @@ const specs = swaggerJsdoc(swaggerOptions);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../frontend/public")));
 app.use(cors());
 
 // Swagger UI
@@ -62,6 +63,7 @@ connectMainDB();
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Serve frontend
 app.get("/", (req, res) => {
@@ -74,6 +76,14 @@ app.get("/login", (req, res) => {
 
 app.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/public", "register.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/public", "admin.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/public", "dashboard.html"));
 });
 
 // 404 handler
