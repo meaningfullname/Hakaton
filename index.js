@@ -1,15 +1,17 @@
-// noinspection JSAnnotator
+
 
 const express = require("express");
 
 const mongoose = require("mongoose");
+const cors = require('cors');
+
 
 const app =express();
 mongoose.connect("mongodb://localhost:27017/Classroms" ,{
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
-
+app.use(cors());
 const db = mongoose.connection;
 
 app.use(express.json());
@@ -29,17 +31,28 @@ const student_model= new mongoose.Schema({
 });
 
 
-const Student =mongoose.model("student", student_model);
+const Student =mongoose.model("students", student_model);
 
 app.post("/student" , async (req,res) =>{
     try {
-        const {student_id,name, lastname, email, password,gender} = req.body;
-        if (!student_id || !name || !lastname || !email || !password || !gender) {
-            return res.status(400).json({error: "All fields required"});
+
+        const {student_id, name ,lastname, email ,password ,gender } =req.body;
+        if(!student_id || !name || !lastname || !email || !password || !gender){
+            return res.status(400).json({error: "all fields is required"});
         }
-        const student = new Student({student_id,name, lastname, email, password,gender});
+        const student =new Student({student_id,name,lastname,email,password,gender});
         await student.save();
         res.status(201).json(student);
+
+        // const {student_id,name, lastname, email, password,gender} = req.body;
+        // if (!student_id || !name || !lastname || !email || !password || !gender) {
+        //     return res.status(400).json({error: "All fields required"});
+        // }
+        // const student = new Student({student_id,name, lastname, email, password,gender});
+        // await student.save();
+        // res.status(201).json(student);
+
+
 
 
     }catch (error){
@@ -54,45 +67,41 @@ app.get("/student", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-app.get("/student/:id " , async (req, res) => {
+app.get("/student/:id", async (req, res) => {
     try {
-        const student = await Student.findById(req.params.id);
-        if (!student) return req.status(404).json({error: "Student not found"});
+        const { id } = req.params;
+        if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+
+        const student = await Student.findById(id).select("-password");
+        if (!student) {
+            return res.status(404).json({ error: "Student not found" });
+        }
+
         res.json(student);
-
-
-
-    }catch (error){
-
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-})
+});
 
-app.put("/student/:id" , async (req,res) =>{
-    try{
-        const {id} =req.params;
-        const {student_id,name, lastname, email, password, gender} = req.body;
-        if (!student_id || !name || !lastname || !email || !password || !gender) {
-            return res.status(400).json({error: "All fields required"});
-        }
-        const Uptadetstudent = await Student.findByIdAndUpdate(id,{student_id,name, lastname,email,password,gender},{new:true,runValidators:true});
+app.put("/student/:id", async (req, res) => {
+    try {
 
-        if (!Uptadetstudent){
-            return res.status(400).json({error: "Student not found"});
-        }
-        res.json(Uptadetstudent);
-
-
-
-
-    }catch (error){
-        res.status(500).json({error: error.message});
+        const { student_id, name ,lastname, email ,password ,gender  } = req.body;
+        const student= await Student.findByIdAndUpdate(req.params.id, { student_id, name ,lastname, email ,password ,gender  }, { new: true });
+        if (!student) return res.status(404).json({ error: "Blog not found" });
+        res.json(student);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-})
+});
 
 app.patch("/student/:id" , async (req,res) =>{
     try{
         const {id} =req.params;
         const update =req.body;
+
         const allowedupdates=["student_id","name","lastname","email","password","gender"];
         const isvalid =Object.keys(update).every(key=>allowedupdates.includes(key));
 

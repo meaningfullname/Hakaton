@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта института</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            column-gap: 20px;
+        }
+
+        .menulist {
+            display: flex;
+            column-gap: 50px;
+        }
+
+        .menulist:hover {
+            color: #777;
+            transition-duration: 0.2s;
+        }
+
+        .link {
+            text-decoration: none;
+            color: #fff;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .floor-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .floor-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #6c757d;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .floor-btn.active {
+            background: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+
+        .floor-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .admin-controls {
+            display: none;
+            gap: 10px;
+        }
+
+        .admin-controls.show {
+            display: flex;
+        }
+
+        .admin-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            background: #28a745;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .admin-btn:hover {
+            background: #218838;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .connection-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .map-container {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .floor-map {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 600px;
+        }
+
+        .floor-map.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .room {
+            position: absolute;
+            border: 3px solid #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .room:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .room.free {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .room.occupied {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .room.reserved {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .room.maintenance {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .room.updating {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .corridor {
+            position: absolute;
+            background: #ecf0f1;
+            border: 2px solid #bdc3c7;
+        }
+
+        .stairs {
+            position: absolute;
+            background: #34495e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .elevator {
+            position: absolute;
+            background: #9b59b6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .info-panel {
+            position: fixed;
+            top: 50%;
+            right: -350px;
+            transform: translateY(-50%);
+            width: 320px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+
+        .info-panel.show {
+            right: 20px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .room-details h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .admin-room-controls {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+
+        .admin-room-controls.show {
+            display: block;
+        }
+
+        .status-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-btn.free { background: #28a745; color: white; }
+        .status-btn.occupied { background: #dc3545; color: white; }
+        .status-btn.reserved { background: #fd7e14; color: white; }
+        .status-btn.maintenance { background: #6c757d; color: white; }
+
+        .time-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .time-controls input {
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+        .notification.info { background: #17a2b8; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>🏛️ Coventry University</h1>
+            <p>Интерактивная карта помещений</p>
+        </div>
+        <nav class="main1234">
+            <ul class="menulist">
+                <li class="item">
+                    <a class="link" href="Demo.html">Home</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="todolist1.html">To-do List</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="schedule.html">Focus Fenix</a>
+                </li>
+                <li class="item">
+                    <a class="link" href="grades.html">Clubs</a>
+                </li>
+            </ul>
+        </nav>
+        <div class="user-info">
+            <div id="userInfo">Подключение...</div>
+            <div id="connectionStatus" class="connection-status disconnected">Отключено</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="floor-selector">
+            <button class="floor-btn active" onclick="showFloor(1)">1 этаж</button>
+            <button class="floor-btn" onclick="showFloor(2)">2 этаж</button>
+            <button class="floor-btn" onclick="showFloor(3)">3 этаж</button>
+        </div>
+
+        <div class="admin-controls" id="adminControls">
+            <button class="admin-btn" onclick="refreshAllRooms()">🔄 Обновить</button>
+            <button class="admin-btn" onclick="toggleBulkMode()">📋 Групповое управление</button>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #2ecc71, #27ae60);"></div>
+                <span>Свободно</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #e74c3c, #c0392b);"></div>
+                <span>Занято</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #f39c12, #e67e22);"></div>
+                <span>Забронировано</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #95a5a6, #7f8c8d);"></div>
+                <span>Ремонт</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-container">
+        <!-- 1 этаж -->
+        <div id="floor1" class="floor-map active">
+            <!-- Коридоры -->
+            <div class="corridor" style="left: 100px; top: 50px; width: 800px; height: 80px;"></div>
+            <div class="corridor" style="left: 100px; top: 250px; width: 800px; height: 80px;"></div>
+            <div class="corridor" style="left: 400px; top: 130px; width: 80px; height: 120px;"></div>
+
+            <!-- Лестницы и лифт -->
+            <div class="stairs" style="left: 50px; top: 200px; width: 40px; height: 80px;">🪜</div>
+            <div class="elevator" style="left: 950px; top: 200px; width: 40px; height: 80px;">🛗</div>
+
+            <!-- Аудитории 1 этаж -->
+            <div class="room free" data-room="101" style="left: 120px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('101')">101</div>
+            <div class="room occupied" data-room="102" style="left: 260px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('102')">102</div>
+            <div class="room reserved" data-room="103" style="left: 500px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('103')">103</div>
+            <div class="room free" data-room="104" style="left: 640px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('104')">104</div>
+            <div class="room maintenance" data-room="105" style="left: 780px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('105')">105</div>
+
+            <div class="room occupied" data-room="106" style="left: 120px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('106')">106</div>
+            <div class="room free" data-room="107" style="left: 260px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('107')">107</div>
+            <div class="room reserved" data-room="108" style="left: 500px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('108')">108</div>
+            <div class="room free" data-room="109" style="left: 640px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('109')">109</div>
+        </div>
+
+        <!-- 2 этаж -->
+        <div id="floor2" class="floor-map">
+            <!-- Коридоры -->
+            <div class="corridor" style="left: 100px; top: 50px; width: 800px; height: 80px;"></div>
+            <div class="corridor" style="left: 100px; top: 250px; width: 800px; height: 80px;"></div>
+            <div class="corridor" style="left: 400px; top: 130px; width: 80px; height: 120px;"></div>
+
+            <!-- Лестницы и лифт -->
+            <div class="stairs" style="left: 50px; top: 200px; width: 40px; height: 80px;">🪜</div>
+            <div class="elevator" style="left: 950px; top: 200px; width: 40px; height: 80px;">🛗</div>
+
+            <!-- Аудитории 2 этаж -->
+            <div class="room reserved" data-room="201" style="left: 120px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('201')">201</div>
+            <div class="room free" data-room="202" style="left: 260px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('202')">202</div>
+            <div class="room occupied" data-room="203" style="left: 500px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('203')">203</div>
+            <div class="room free" data-room="204" style="left: 640px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('204')">204</div>
+            <div class="room reserved" data-room="205" style="left: 780px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('205')">205</div>
+
+            <div class="room free" data-room="206" style="left: 120px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('206')">206</div>
+            <div class="room occupied" data-room="207" style="left: 260px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('207')">207</div>
+            <div class="room free" data-room="208" style="left: 500px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('208')">208</div>
+            <div class="room maintenance" data-room="209" style="left: 640px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('209')">209</div>
+        </div>
+
+        <!-- 3 этаж -->
+        <div id="floor3" class="floor-map">
+            <!-- Коридоры -->
+            <div class="corridor" style="left: 100px; top: 50px; width: 800px; height: 80px;"></div>
+            <div class="corridor" style="left: 100px; top: 250px; width: 800px; height: 80px;"></div>
+            <div class="corridor" style="left: 400px; top: 130px; width: 80px; height: 120px;"></div>
+
+            <!-- Лестницы и лифт -->
+            <div class="stairs" style="left: 50px; top: 200px; width: 40px; height: 80px;">🪜</div>
+            <div class="elevator" style="left: 950px; top: 200px; width: 40px; height: 80px;">🛗</div>
+
+            <!-- Аудитории 3 этаж -->
+            <div class="room occupied" data-room="301" style="left: 120px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('301')">301</div>
+            <div class="room free" data-room="302" style="left: 260px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('302')">302</div>
+            <div class="room reserved" data-room="303" style="left: 500px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('303')">303</div>
+            <div class="room free" data-room="304" style="left: 640px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('304')">304</div>
+            <div class="room occupied" data-room="305" style="left: 780px; top: 150px; width: 120px; height: 80px;" onclick="showRoomInfo('305')">305</div>
+
+            <div class="room free" data-room="306" style="left: 120px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('306')">306</div>
+            <div class="room reserved" data-room="307" style="left: 260px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('307')">307</div>
+            <div class="room free" data-room="308" style="left: 500px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('308')">308</div>
+            <div class="room maintenance" data-room="309" style="left: 640px; top: 350px; width: 120px; height: 80px;" onclick="showRoomInfo('309')">309</div>
+        </div>
+    </div>
+</div>
+
+<div id="infoPanel" class="info-panel">
+    <button class="close-btn" onclick="hideRoomInfo()">×</button>
+    <div class="room-details">
+        <h3 id="roomTitle">Информация о помещении</h3>
+        <div class="detail-item">
+            <strong>Статус:</strong>
+            <span class="status-indicator" id="statusIndicator"></span>
+            <span id="roomStatus"></span>
+        </div>
+        <div class="detail-item">
+            <strong>Тип:</strong> <span id="roomType"></span>
+        </div>
+        <div class="detail-item">
+            <strong>Вместимость:</strong> <span id="roomCapacity"></span> чел.
+        </div>
+        <div class="detail-item">
+            <strong>Оборудование:</strong> <span id="roomEquipment"></span>
+        </div>
+        <div class="detail-item">
+            <strong>Время обновления:</strong> <span id="updateTime"></span>
+        </div>
+        <div class="detail-item">
+            <strong>Обновил:</strong> <span id="updatedBy"></span>
+        </div>
+
+        <div class="admin-room-controls" id="adminRoomControls">
+            <div class="status-buttons">
+                <button class="status-btn free" onclick="updateRoomStatus('free')">Свободно</button>
+                <button class="status-btn occupied" onclick="updateRoomStatus('occupied')">Занято</button>
+                <button class="status-btn reserved" onclick="updateRoomStatus('reserved')">Забронировано</button>
+                <button class="status-btn maintenance" onclick="updateRoomStatus('maintenance')">Ремонт</button>
+            </div>
+            <div class="time-controls">
+                <input type="time" id="startTime" placeholder="С">
+                <input type="time" id="endTime" placeholder="До">
+                <button class="admin-btn" onclick="scheduleRoomStatus()">Запланировать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<!-- Socket.IO CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
+<script>
+    // Global variables
+    let socket = null;
+    let currentUser = null;
+    let currentRoom = null;
+    let rooms = new Map();
+
+    // Get token from localStorage (you should implement proper auth)
+    const token = localStorage.getItem('authToken') || 'your-jwt-token-here';
+    const API_BASE = 'http://localhost:5000/api';
+
+    // Initialize socket connection
+    function initSocket() {
+        socket = io('http://localhost:5000', {
+            auth: {
+                token: token
+            }
+        });
+
+        socket.on('connect', () => {
+            updateConnectionStatus(true);
+            showNotification('Подключено к серверу', 'success');
+        });
+
+        socket.on('disconnect', () => {
+            updateConnectionStatus(false);
+            showNotification('Соединение потеряно', 'error');
+        });
+
+        socket.on('userConnected', (data) => {
+            currentUser = data;
+            updateUserInfo(data);
+            if (data.role === 'admin') {
+                document.getElementById('adminControls').classList.add('show');
+            }
+        });
+
+        socket.on('roomStatusUpdate', (data) => {
+            updateRoomVisual(data.roomNumber, data.status);
+            if (currentRoom === data.roomNumber) {
+                updateRoomInfo(data);
+            }
+            if (!data.isAutoUpdate) {
+                showNotification(`Комната ${data.roomNumber} обновлена: ${getStatusText(data.status)}`, 'info');
+            }
+        });
+
+        socket.on('updateConfirmed', (data) => {
+            showNotification(`Статус комнаты ${data.roomNumber} успешно обновлен`, 'success');
+        });
+
+        socket.on('error', (error) => {
+            showNotification(error.message, 'error');
+        });
+
+        socket.on('periodicStatusUpdate', (roomStatuses) => {
+            roomStatuses.forEach(room => {
+                updateRoomVisual(room.roomNumber, room.status);
+            });
+        });
+    }
+
+    // Update connection status
+    function updateConnectionStatus(connected) {
+        const statusEl = document.getElementById('connectionStatus');
+        if (connected) {
+            statusEl.textContent = 'Подключено';
+            statusEl.className = 'connection-status connected';
+        } else {
+            statusEl.textContent = 'Отключено';
+            statusEl.className = 'connection-status disconnected';
+        }
+    }
+
+    // Update user info
+    function updateUserInfo(user) {
+        const userInfoEl = document.getElementById('userInfo');
+        userInfoEl.innerHTML = `
+                <div>${user.name}</div>
+                <div style="font-size: 10px; opacity: 0.8;">${user.role === 'admin' ? 'Администратор' : 'Студент'}</div>
+            `;
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type} show`;
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // Get status text in Russian
+    function getStatusText(status) {
+        const statusMap = {
+            'free': 'Свободно',
+            'occupied': 'Занято',
+            'reserved': 'Забронировано',
+            'maintenance': 'На ремонте'
+        };
+        return statusMap[status] || status;
+    }
+
+    // Update room visual appearance
+    function updateRoomVisual(roomNumber, status) {
+        const roomEl = document.querySelector(`[data-room="${roomNumber}"]`);
+        if (roomEl) {
+            // Remove all status classes
+            roomEl.classList.remove('free', 'occupied', 'reserved', 'maintenance', 'updating');
+            // Add new status class
+            roomEl.classList.add(status);
+            // Add updating animation briefly
+            roomEl.classList.add('updating');
+            setTimeout(() => {
+                roomEl.classList.remove('updating');
+            }, 1000);
+        }
+    }
+
+    // Load room data from API
+    async function loadRoomData(roomNumber) {
+        try {
+            const response = await fetch(`${API_BASE}/rooms/${roomNumber}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                return await response.json();
+            } else {
+                throw new Error('Failed to load room data');
+            }
+        } catch (error) {
+            console.error('Error loading room data:', error);
+            showNotification('Ошибка загрузки данных комнаты', 'error');
+            return null;
+        }
+    }
+
+    // Show floor
+    function showFloor(floorNumber) {
+        // Hide all floors
+        document.querySelectorAll('.floor-map').forEach(floor => {
+            floor.classList.remove('active');
+        });
+
+        // Show selected floor
+        document.getElementById('floor' + floorNumber).classList.add('active');
+
+        // Update buttons
+        document.querySelectorAll('.floor-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        // Join floor updates via socket
+        if (socket) {
+            socket.emit('joinFloor', floorNumber);
+        }
+    }
+
+    // Show room info
+    async function showRoomInfo(roomNumber) {
+        currentRoom = roomNumber;
+
+        // Load room data from API
+        const roomData = await loadRoomData(roomNumber);
+        if (!roomData) return;
+
+        // Update info panel
+        document.getElementById('roomTitle').textContent = `Аудитория ${roomData.roomNumber} - ${roomData.type}`;
+        document.getElementById('roomType').textContent = roomData.type;
+        document.getElementById('roomCapacity').textContent = roomData.capacity;
+        document.getElementById('roomEquipment').textContent = roomData.equipment;
+
+        updateRoomStatusDisplay(roomData.currentStatus);
+
+        const updateTime = new Date(roomData.lastUpdated).toLocaleString('ru-RU');
+        document.getElementById('updateTime').textContent = updateTime;
+
+        const updatedBy = roomData.updatedBy ?
+            `${roomData.updatedBy.firstName} ${roomData.updatedBy.lastName}` :
+            'Система';
+        document.getElementById('updatedBy').textContent = updatedBy;
+
+        // Show admin controls if user is admin
+        if (currentUser && currentUser.role === 'admin') {
+            document.getElementById('adminRoomControls').classList.add('show');
+        }
+
+        document.getElementById('infoPanel').classList.add('show');
+    }
+
+    // Update room status display
+    function updateRoomStatusDisplay(status) {
+        const statusIndicator = document.getElementById('statusIndicator');
+        const roomStatus = document.getElementById('roomStatus');
+
+        // Set indicator color and status text
+        const statusConfig = {
+            'free': {
+                color: 'linear-gradient(135deg, #2ecc71, #27ae60)',
+                text: 'Свободно'
+            },
+            'occupied': {
+                color: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+                text: 'Занято'
+            },
+            'reserved': {
+                color: 'linear-gradient(135deg, #f39c12, #e67e22)',
+                text: 'Забронировано'
+            },
+            'maintenance': {
+                color: 'linear-gradient(135deg, #95a5a6, #7f8c8d)',
+                text: 'На ремонте'
+            }
+        };
+
+        const config = statusConfig[status];
+        if (config) {
+            statusIndicator.style.background = config.color;
+            roomStatus.textContent = config.text;
+        }
+    }
+
+    // Update room info from socket data
+    function updateRoomInfo(data) {
+        updateRoomStatusDisplay(data.status);
+
+        const updateTime = new Date(data.lastUpdated).toLocaleString('ru-RU');
+        document.getElementById('updateTime').textContent = updateTime;
+
+        if (data.updatedBy) {
+            document.getElementById('updatedBy').textContent = data.updatedBy.name;
+        }
+    }
+
+    // Hide room info
+    function hideRoomInfo() {
+        document.getElementById('infoPanel').classList.remove('show');
+        currentRoom = null;
+    }
+
+    // Update room status (admin only)
+    function updateRoomStatus(status) {
+        if (!currentRoom || !socket || !currentUser || currentUser.role !== 'admin') {
+            showNotification('Недостаточно прав для изменения статуса', 'error');
+            return;
+        }
+
+        socket.emit('updateRoomStatus', {
+            roomNumber: currentRoom,
+            status: status
+        });
+    }
+
+    // Schedule room status (admin only)
+    function scheduleRoomStatus() {
+        if (!currentRoom || !socket || !currentUser || currentUser.role !== 'admin') {
+            showNotification('Недостаточно прав', 'error');
+            return;
+        }
+
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        if (!startTime || !endTime) {
+            showNotification('Укажите время начала и окончания', 'error');
+            return;
+        }
+
+        const status = prompt('Выберите статус (free/occupied/reserved/maintenance):');
+        if (!['free', 'occupied', 'reserved', 'maintenance'].includes(status)) {
+            showNotification('Неверный статус', 'error');
+            return;
+        }
+
+        socket.emit('updateRoomStatus', {
+            roomNumber: currentRoom,
+            status: status,
+            startTime: startTime,
+            endTime: endTime,
+            purpose: prompt('Цель (необязательно):') || ''
+        });
+
+        // Clear time inputs
+        document.getElementById('startTime').value = '';
+        document.getElementById('endTime').value = '';
+    }
+
+    // Refresh all rooms
+    async function refreshAllRooms() {
+        try {
+            const response = await fetch(`${API_BASE}/rooms`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const roomsData = await response.json();
+                roomsData.forEach(room => {
+                    updateRoomVisual(room.roomNumber, room.currentStatus);
+                });
+                showNotification('Данные обновлены', 'success');
+            } else {
+                throw new Error('Failed to refresh rooms');
+            }
+        } catch (error) {
+            console.error('Error refreshing rooms:', error);
+            showNotification('Ошибка обновления данных', 'error');
+        }
+    }
+
+    // Toggle bulk mode (placeholder for future implementation)
+    function toggleBulkMode() {
+        showNotification('Групповое управление в разработке', 'info');
+    }
+
+    // Initialize the application
+    function init() {
+        // Check if token exists
+        if (!token || token === 'your-jwt-token-here') {
+            showNotification('Требуется авторизация. Перенаправление...', 'error');
+            // Redirect to login page after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
+            return;
+        }
+
+        // Initialize socket connection
+        initSocket();
+
+        // Load initial room data
+        refreshAllRooms();
+    }
+
+    // Start the application when page loads
+    document.addEventListener('DOMContentLoaded', init);
+
+    // Handle page unload
+    window.addEventListener('beforeunload', () => {
+        if (socket) {
+            socket.disconnect();
+        }
+    });
+
+    // Simulate periodic updates for demo (remove in production)
+    setInterval(() => {
+        if (Math.random() < 0.3) { // 30% chance every 15 seconds
+            const rooms = document.querySelectorAll('.room[data-room]');
+            const randomRoom = rooms[Math.floor(Math.random() * rooms.length)];
+            const statuses = ['free', 'occupied', 'reserved'];
+            const currentStatus = randomRoom.classList.contains('maintenance') ? 'maintenance' :
+                randomRoom.classList.contains('free') ? 'free' :
+                    randomRoom.classList.contains('occupied') ? 'occupied' : 'reserved';
+
+            if (currentStatus !== 'maintenance') {
+                const availableStatuses = statuses.filter(s => s !== currentStatus);
+                const newStatus = availableStatuses[Math.floor(Math.random() * availableStatuses.length)];
+                updateRoomVisual(randomRoom.dataset.room, newStatus);
+            }
+        }
+    }, 15000);
+</script>
+</body>
+</html>

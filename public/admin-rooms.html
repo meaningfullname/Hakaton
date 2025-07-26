@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель администратора - Управление комнатами</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.2em;
+      margin-bottom: 10px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 30px;
+      background: #f8f9fa;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .controls {
+      padding: 20px 30px;
+      background: #e9ecef;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-warning {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .rooms-table {
+      padding: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #495057;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-free { background: #d4edda; color: #155724; }
+    .status-occupied { background: #f8d7da; color: #721c24; }
+    .status-reserved { background: #fff3cd; color: #856404; }
+    .status-maintenance { background: #d6d8db; color: #383d41; }
+
+    .room-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+      background: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .close {
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #aaa;
+    }
+
+    .close:hover {
+      color: black;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .status-buttons {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .status-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      z-index: 2000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .notification.success { background: #28a745; }
+    .notification.error { background: #dc3545; }
+    .notification.info { background: #17a2b8; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🛠️ Панель администратора</h1>
+    <p>Управление комнатами и расписанием</p>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-number" id="totalRooms">-</div>
+      <div class="stat-label">Всего комнат</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="freeRooms" style="color: #28a745;">-</div>
+      <div class="stat-label">Свободно</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="occupiedRooms" style="color: #dc3545;">-</div>
+      <div class="stat-label">Занято</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="reservedRooms" style="color: #ffc107;">-</div>
+      <div class="stat-label">Забронировано</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="maintenanceRooms" style="color: #6c757d;">-</div>
+      <div class="stat-label">На ремонте</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-success" onclick="openCreateRoomModal()">➕ Добавить комнату</button>
+    <button class="btn btn-primary" onclick="refreshData()">🔄 Обновить</button>
+    <button class="btn btn-warning" onclick="bulkStatusUpdate()">📋 Массовое обновление</button>
+    <button class="btn btn-primary" onclick="exportData()">📊 Экспорт</button>
+  </div>
+
+  <div class="rooms-table">
+    <table id="roomsTable">
+      <thead>
+      <tr>
+        <th>Комната</th>
+        <th>Этаж</th>
+        <th>Тип</th>
+        <th>Вместимость</th>
+        <th>Статус</th>
+        <th>Обновлено</th>
+        <th>Действия</th>
+      </tr>
+      </thead>
+      <tbody id="roomsTableBody">
+      <tr>
+        <td colspan="7" class="loading">Загрузка данных...</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Room Edit Modal -->
+<div id="roomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Управление комнатой</h2>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Комната:</label>
+        <input type="text" id="modalRoomNumber" readonly>
+      </div>
+      <div class="form-group">
+        <label>Тип:</label>
+        <input type="text" id="modalRoomType">
+      </div>
+      <div class="form-group">
+        <label>Вместимость:</label>
+        <input type="number" id="modalCapacity" min="0">
+      </div>
+      <div class="form-group">
+        <label>Оборудование:</label>
+        <textarea id="modalEquipment" rows="3"></textarea>
+      </div>
+
+      <h3>Изменить статус</h3>
+      <div class="status-buttons">
+        <button class="status-btn" style="background: #28a745; color: white;" onclick="updateStatus('free')">Свободно</button>
+        <button class="status-btn" style="background: #dc3545; color: white;" onclick="updateStatus('occupied')">Занято</button>
+        <button class="status-btn" style="background: #ffc107; color: #212529;" onclick="updateStatus('reserved')">Забронировано</button>
+        <button class="status-btn" style="background: #6c757d; color: white;" onclick="updateStatus('maintenance')">Ремонт</button>
+      </div>
+
+      <div class="form-group">
+        <label>Время (опционально):</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="time" id="modalStartTime" placeholder="Начало">
+          <input type="time" id="modalEndTime" placeholder="Конец">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Цель/Описание:</label>
+        <input type="text" id="modalPurpose" placeholder="Опционально">
+      </div>
+
+      <div style="text-align: right; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="saveRoomChanges()">💾 Сохранить изменения</button>
+        <button class="btn btn-danger" onclick="deleteRoom()" style="margin-left: 10px;">🗑️ Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Room Modal -->
+<div id="createRoomModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="close" onclick="closeCreateModal()">&times;</span>
+      <h2>Создать новую комнату</h2>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Номер комнаты:</label>
+        <input type="text" id="createRoomNumber" placeholder="например, 401">
+      </div>
+      <div class="form-group">
+        <label>Этаж:</label>
+        <select id="createFloor">
+          <option value="1">1 этаж</option>
+          <option value="2">2 этаж</option>
+          <option value="3">3 этаж</option>
+          <option value="4">4 этаж</option>
+          <option value="5">5 этаж</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Тип комнаты:</label>
+        <select id="createRoomType">
+          <option value="Лекционная аудитория">Лекционная аудитория</option>
+          <option value="Семинарская аудитория">Семинарская аудитория</option>
+          <option value="Компьютерный класс">Компьютерный класс</option>
+          <option value="Лаборатория">Лаборатория</option>
+          <option value="Конференц-зал">Конференц-зал</option>
+          <option value="Библиотека">Библиотека</option>
+          <option value="Кабинет">Кабинет</option>
+          <option value="Другое">Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Вместимость:</label>
+        <input type="number" id="createCapacity" min="0" placeholder="Количество мест">
+      </div>
+      <div class="form-group">
+        <label>Оборудование:</label>
+        <textarea id="createEquipment" rows="3" placeholder="Описание оборудования"></textarea>
+      </div>
+      <div style="text-align: right; margin-top: 20px;">
+        <button class="btn btn-success" onclick="createRoom()">➕ Создать комнату</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="notification" class="notification"></div>
+
+<!-- Socket.IO CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
+<script>
+  // Global variables
+  let socket = null;
+  let currentUser = null;
+  let currentRoom = null;
+  let rooms = [];
+
+  // Configuration
+  const token = localStorage.getItem('authToken') || 'your-jwt-token-here';
+  const API_BASE = 'http://localhost:5000/api';
+
+  // Initialize socket connection
+  function initSocket() {
+    socket = io('http://localhost:5000', {
+      auth: { token: token }
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
+
+    socket.on('userConnected', (data) => {
+      currentUser = data;
+      if (data.role !== 'admin') {
+        showNotification('Доступ запрещен - требуются права администратора', 'error');
+        setTimeout(() => window.location.href = 'index.html', 2000);
+      }
+    });
+
+    socket.on('roomStatusUpdate', (data) => {
+      updateRoomInTable(data);
+      loadStats();
+    });
+
+    socket.on('roomCreated', (data) => {
+      showNotification(`Комната ${data.room.roomNumber} создана`, 'success');
+      loadRooms();
+      loadStats();
+    });
+
+    socket.on('roomDeleted', (data) => {
+      showNotification(`Комната ${data.roomNumber} удалена`, 'info');
+      loadRooms();
+      loadStats();
+    });
+
+    socket.on('error', (error) => {
+      showNotification(error.message, 'error');
+    });
+  }
+
+  // Show notification
+  function showNotification(message, type = 'info') {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${type} show`;
+
+    setTimeout(() => {
+      notification.classList.remove('show');
+    }, 4000);
+  }
+
+  // Load room statistics
+  async function loadStats() {
+    try {
+      const response = await fetch(`${API_BASE}/rooms/admin/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const stats = await response.json();
+        document.getElementById('totalRooms').textContent = stats.total;
+        document.getElementById('freeRooms').textContent = stats.free;
+        document.getElementById('occupiedRooms').textContent = stats.occupied;
+        document.getElementById('reservedRooms').textContent = stats.reserved;
+        document.getElementById('maintenanceRooms').textContent = stats.maintenance;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  // Load all rooms
+  async function loadRooms() {
+    try {
+      const response = await fetch(`${API_BASE}/rooms`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        rooms = await response.json();
+        renderRoomsTable();
+      } else {
+        throw new Error('Failed to load rooms');
+      }
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      showNotification('Ошибка загрузки данных о комнатах', 'error');
+    }
+  }
+
+  // Render rooms table
+  function renderRoomsTable() {
+    const tbody = document.getElementById('roomsTableBody');
+
+    if (rooms.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="loading">Комнаты не найдены</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rooms.map(room => {
+      const statusClass = `status-${room.currentStatus}`;
+      const statusText = getStatusText(room.currentStatus);
+      const lastUpdated = room.lastUpdated ?
+              new Date(room.lastUpdated).toLocaleString('ru-RU') :
+              'Неизвестно';
+
+      return `
+                    <tr data-room="${room.roomNumber}">
+                        <td><strong>${room.roomNumber}</strong></td>
+                        <td>${room.floor}</td>
+                        <td>${room.type}</td>
+                        <td>${room.capacity}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td><small>${lastUpdated}</small></td>
+                        <td class="room-actions">
+                            <button class="btn btn-primary btn-sm" onclick="editRoom('${room.roomNumber}')">✏️</button>
+                            <button class="btn btn-success btn-sm" onclick="quickStatusChange('${room.roomNumber}', 'free')">🟢</button>
+                            <button class="btn btn-danger btn-sm" onclick="quickStatusChange('${room.roomNumber}', 'occupied')">🔴</button>
+                        </td>
+                    </tr>
+                `;
+    }).join('');
+  }
+
+  // Get status text in Russian
+  function getStatusText(status) {
+    const statusMap = {
+      'free': 'Свободно',
+      'occupied': 'Занято',
+      'reserved': 'Забронировано',
+      'maintenance': 'Ремонт'
+    };
+    return statusMap[status] || status;
+  }
+
+  // Update room in table
+  function updateRoomInTable(roomData) {
+    const roomRow = document.querySelector(`tr[data-room="${roomData.roomNumber}"]`);
+    if (roomRow) {
+      const statusCell = roomRow.querySelector('.status-badge');
+      if (statusCell) {
+        statusCell.className = `status-badge status-${roomData.status}`;
+        statusCell.textContent = getStatusText(roomData.status);
+      }
+
+      const timeCell = roomRow.querySelectorAll('td')[5];
+      if (timeCell) {
+        timeCell.innerHTML = `<small>${new Date(roomData.lastUpdated).toLocaleString('ru-RU')}</small>`;
+      }
+    }
+
+    // Update room in memory
+    const roomIndex = rooms.findIndex(r => r.roomNumber === roomData.roomNumber);
+    if (roomIndex !== -1) {
+      rooms[roomIndex].currentStatus = roomData.status;
+      rooms[roomIndex].lastUpdated = roomData.lastUpdated;
+    }
+  }
+
+  // Quick status change
+  async function quickStatusChange(roomNumber, status) {
+    try {
+      const response = await fetch(`${API_BASE}/rooms/admin/${roomNumber}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        showNotification(`Статус комнаты ${roomNumber} изменен на ${getStatusText(status)}`, 'success');
+      } else {
+        throw new Error('Failed to update room status');
+      }
+    } catch (error) {
+      console.error('Error updating room status:', error);
+      showNotification('Ошибка обновления статуса', 'error');
+    }
+  }
+
+  // Edit room
+  async function editRoom(roomNumber) {
+    try {
+      const response = await fetch(`${API_BASE}/rooms/${roomNumber}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const room = await response.json();
+        currentRoom = room;
+
+        // Fill modal with room data
+        document.getElementById('modalRoomNumber').value = room.roomNumber;
+        document.getElementById('modalRoomType').value = room.type;
+        document.getElementById('modalCapacity').value = room.capacity;
+        document.getElementById('modalEquipment').value = room.equipment;
+
+        document.getElementById('roomModal').style.display = 'block';
+      } else {
+        throw new Error('Failed to load room details');
+      }
+    } catch (error) {
+      console.error('Error loading room details:', error);
+      showNotification('Ошибка загрузки данных комнаты', 'error');
+    }
+  }
+
+  // Update room status from modal
+  function updateStatus(status) {
+    const startTime = document.getElementById('modalStartTime').value;
+    const endTime = document.getElementById('modalEndTime').value;
+    const purpose = document.getElementById('modalPurpose').value;
+
+    const data = {
+      roomNumber: currentRoom.roomNumber,
+      status,
+      purpose: purpose || ''
+    };
+
+    if (startTime && endTime) {
+      data.startTime = startTime;
+      data.endTime = endTime;
+    }
+
+    if (socket) {
+      socket.emit('updateRoomStatus', data);
+    }
+  }
+
+  // Save room changes
+  async function saveRoomChanges() {
+    if (!currentRoom) return;
+
+    const updateData = {
+      type: document.getElementById('modalRoomType').value,
+      capacity: parseInt(document.getElementById('modalCapacity').value),
+      equipment: document.getElementById('modalEquipment').value
+    };
+
+    try {
+      const response = await fetch(`${API_BASE}/rooms/admin/${currentRoom.roomNumber}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+        showNotification('Комната успешно обновлена', 'success');
+        closeModal();
+        loadRooms();
+      } else {
+        throw new Error('Failed to update room');
+      }
+    } catch (error) {
+      console.error('Error updating room:', error);
+      showNotification('Ошибка обновления комнаты', 'error');
+    }
+  }
+
+  // Delete room
+  async function deleteRoom() {
+    if (!currentRoom) return;
+
+    if (!confirm(`Вы уверены, что хотите удалить комнату ${currentRoom.roomNumber}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/rooms/admin/${currentRoom.roomNumber}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        showNotification(`Комната ${currentRoom.roomNumber} удалена`, 'success');
+        closeModal();
+        loadRooms();
+        loadStats();
+      } else {
+        throw new Error('Failed to delete room');
+      }
+    } catch (error) {
+      console.error('Error deleting room:', error);
+      showNotification('Ошибка удаления комнаты', 'error');
+    }
+  }
+
+  // Open create room modal
+  function openCreateRoomModal() {
+    document.getElementById('createRoomModal').style.display = 'block';
+  }
+
+  // Create new room
+  async function createRoom() {
+    const roomData = {
+      roomNumber: document.getElementById('createRoomNumber').value,
+      floor: parseInt(document.getElementById('createFloor').value),
+      type: document.getElementById('createRoomType').value,
+      capacity: parseInt(document.getElementById('createCapacity').value),
+      equipment: document.getElementById('createEquipment').value
+    };
+
+    // Validation
+    if (!roomData.roomNumber || !roomData.type || !roomData.equipment) {
+      showNotification('Заполните все обязательные поля', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/rooms/admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(roomData)
+      });
+
+      if (response.ok) {
+        showNotification(`Комната ${roomData.roomNumber} создана`, 'success');
+        closeCreateModal();
+        loadRooms();
+        loadStats();
+
+        // Clear form
+        document.getElementById('createRoomNumber').value = '';
+        document.getElementById('createCapacity').value = '';
+        document.getElementById('createEquipment').value = '';
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      showNotification(error.message || 'Ошибка создания комнаты', 'error');
+    }
+  }
+
+  // Close modals
+  function closeModal() {
+    document.getElementById('roomModal').style.display = 'none';
+    currentRoom = null;
+  }
+
+  function closeCreateModal() {
+    document.getElementById('createRoomModal').style.display = 'none';
+  }
+
+  // Refresh data
+  function refreshData() {
+    loadRooms();
+    loadStats();
+    showNotification('Данные обновлены', 'success');
+  }
+
+  // Bulk status update (placeholder)
+  function bulkStatusUpdate() {
+    showNotification('Функция массового обновления в разработке', 'info');
+  }
+
+  // Export data (placeholder)
+  function exportData() {
+    const csvContent = "data:text/csv;charset=utf-8," +
+            "Комната,Этаж,Тип,Вместимость,Статус,Оборудование\n" +
+            rooms.map(room =>
+                    `${room.roomNumber},${room.floor},${room.type},${room.capacity},${getStatusText(room.currentStatus)},"${room.equipment}"`
+            ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `rooms_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification('Данные экспортированы', 'success');
+  }
+
+  // Initialize application
+  function init() {
+    if (!token || token === 'your-jwt-token-here') {
+      showNotification('Требуется авторизация', 'error');
+      setTimeout(() => window.location.href = 'login.html', 2000);
+      return;
+    }
+
+    initSocket();
+    loadRooms();
+    loadStats();
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    const modal = document.getElementById('roomModal');
+    const createModal = document.getElementById('createRoomModal');
+    if (event.target === modal) {
+      closeModal();
+    }
+    if (event.target === createModal) {
+      closeCreateModal();
+    }
+  }
+
+  // Start application
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
