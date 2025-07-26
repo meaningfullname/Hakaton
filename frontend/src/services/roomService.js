@@ -1,3 +1,5 @@
+const BASE_URL = 'https://hakaton-production-a902.up.railway.app/';
+
 const roomService = {
     // Get all rooms with optional filters
     getRooms: async (token, filters = {}) => {
@@ -8,7 +10,7 @@ const roomService = {
       if (filters.type) queryParams.append('type', filters.type);
       if (filters.status) queryParams.append('status', filters.status);
       
-      const url = `/api/rooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const url = `${BASE_URL}/api/rooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -20,7 +22,7 @@ const roomService = {
   
     // Get specific room details
     getRoom: async (token, roomNumber) => {
-      const res = await fetch(`/api/rooms/${roomNumber}`, {
+      const res = await fetch(`${BASE_URL}/api/rooms/${roomNumber}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -30,7 +32,7 @@ const roomService = {
   
     // Get room schedule
     getRoomSchedule: async (token, roomNumber, date = null) => {
-      const url = `/api/rooms/${roomNumber}/schedule${date ? `?date=${date}` : ''}`;
+      const url = `${BASE_URL}/api/rooms/${roomNumber}/schedule${date ? `?date=${date}` : ''}`;
       
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -44,7 +46,7 @@ const roomService = {
     admin: {
       // Update room status
       updateRoomStatus: async (token, roomNumber, statusData) => {
-        const res = await fetch(`/api/rooms/admin/${roomNumber}/status`, {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/${roomNumber}/status`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -59,7 +61,7 @@ const roomService = {
   
       // Bulk update room statuses
       bulkUpdateRooms: async (token, updates) => {
-        const res = await fetch('/api/rooms/admin/bulk-update', {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/bulk-update`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -74,7 +76,7 @@ const roomService = {
   
       // Create new room
       createRoom: async (token, roomData) => {
-        const res = await fetch('/api/rooms/admin', {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -89,7 +91,7 @@ const roomService = {
   
       // Update room details
       updateRoom: async (token, roomNumber, roomData) => {
-        const res = await fetch(`/api/rooms/admin/${roomNumber}`, {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/${roomNumber}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -104,7 +106,7 @@ const roomService = {
   
       // Delete room
       deleteRoom: async (token, roomNumber) => {
-        const res = await fetch(`/api/rooms/admin/${roomNumber}`, {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/${roomNumber}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -115,7 +117,7 @@ const roomService = {
   
       // Get room statistics
       getRoomStats: async (token) => {
-        const res = await fetch('/api/rooms/admin/stats', {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
