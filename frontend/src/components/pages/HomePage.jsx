@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin, Flame, BarChart3 } from 'lucide-react';
+import { Clock, MapPin, Flame, BarChart3, Home } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardTile from '../layout/DashboardTile';
 
@@ -7,16 +7,17 @@ const HomePage = ({ setCurrentView }) => {
   const { user } = useAuth();
   
   const newsData = [
-    { title: "Открытие новой столовой", text: "С 1 августа — в корпусе №3." },
-    { title: "Изменения в расписании", text: "Пары начинаются на 15 мин раньше." },
-    { title: "Хакатон Campus Tech 2025", text: "Регистрация открыта до 5 августа!" }
+    { title: "New Cafeteria Opening", text: "Opening August 1st in Building 3." },
+    { title: "Schedule Changes", text: "Lectures start 15 minutes earlier." },
+    { title: "Campus Tech Hackathon 2025", text: "Registration open until August 5th!" }
   ];
 
   const tiles = [
-    { icon: <Clock size={40} />, title: 'To-do List', desc: 'Ваши текущие задания', view: 'todo' },
-    { icon: <MapPin size={40} />, title: 'Map', desc: 'Карта кампуса', view: 'map' },
-    { icon: <Flame size={40} />, title: 'Focus Phoenix', desc: 'Таймер для учебы', view: 'phoenix' },
-    { icon: <BarChart3 size={40} />, title: 'Clubs', desc: 'Студенческие клубы', view: 'clubs' }
+    { icon: <Clock size={40} />, title: 'To-do List', desc: 'Your current assignments', view: 'todo' },
+    { icon: <Home size={40} />, title: 'Rooms', desc: 'Campus room availability', view: 'rooms' },
+    { icon: <MapPin size={40} />, title: 'Map', desc: 'Campus map', view: 'map' },
+    { icon: <Flame size={40} />, title: 'Focus Phoenix', desc: 'Study timer', view: 'phoenix' },
+    { icon: <BarChart3 size={40} />, title: 'Clubs', desc: 'Student clubs', view: 'clubs' }
   ];
 
   return (
@@ -45,7 +46,7 @@ const HomePage = ({ setCurrentView }) => {
 
       {/* News */}
       <section style={{ marginTop: '50px' }}>
-        <h2 style={{ textAlign: 'center', color: '#00529b' }}>Новости кампуса</h2>
+        <h2 style={{ textAlign: 'center', color: '#00529b' }}>Campus News</h2>
         <div style={{ maxWidth: '800px', margin: '20px auto', padding: '0 20px' }}>
           {newsData.map((news, i) => (
             <div

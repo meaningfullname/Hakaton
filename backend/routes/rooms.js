@@ -4,19 +4,120 @@ const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
-// Get all rooms with current status (accessible to all authenticated users)
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Room:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: Room ID
+ *         roomNumber:
+ *           type: string
+ *           description: Room number/identifier
+ *         floor:
+ *           type: number
+ *           description: Floor number (0 for ground floor)
+ *         building:
+ *           type: string
+ *           description: Building name
+ *         type:
+ *           type: string
+ *           enum: [Lecture Theatre, Seminar Room, Computer Lab, Physics Laboratory, Chemistry Laboratory, Assembly Hall, Library, Dean's Office, Cafeteria, IT Laboratory, Conference Room, Electronics Laboratory, Multimedia Room, Mathematics Room, Language Laboratory, Programming Department, Research Laboratory, Meeting Room, Archive, Server Room, Vice-Chancellor's Office, Council Chamber, Teaching Resource Centre, Design Studio, Study Room]
+ *         capacity:
+ *           type: number
+ *           description: Room capacity
+ *         equipment:
+ *           type: string
+ *           description: Available equipment
+ *         currentStatus:
+ *           type: string
+ *           enum: [free, occupied, reserved, maintenance]
+ *         schedule:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               startTime:
+ *                 type: string
+ *               endTime:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [free, occupied, reserved, maintenance]
+ *               purpose:
+ *                 type: string
+ *         lastUpdated:
+ *           type: string
+ *           format: date-time
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
+
+/**
+ * @swagger
+ * /api/rooms:
+ *   get:
+ *     summary: Get all rooms with current status
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: floor
+ *         schema:
+ *           type: number
+ *         description: Filter by floor number
+ *       - in: query
+ *         name: building
+ *         schema:
+ *           type: string
+ *         description: Filter by building
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by room type
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [free, occupied, reserved, maintenance]
+ *         description: Filter by current status
+ *     responses:
+ *       200:
+ *         description: List of rooms
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Room'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.get("/", authenticateToken, async (req, res) => {
     try {
-        const { floor } = req.query;
-        let rooms;
+        const { floor, building, type, status } = req.query;
+        let query = {};
 
-        if (floor) {
-            rooms = await Room.getRoomsByFloor(parseInt(floor));
-        } else {
-            rooms = await Room.find({})
-                .populate('updatedBy', 'firstName lastName username')
-                .sort({ floor: 1, roomNumber: 1 });
-        }
+        // Build query filters
+        if (floor !== undefined) query.floor = parseInt(floor);
+        if (building) query.building = building;
+        if (type) query.type = type;
+        if (status) query.currentStatus = status;
+
+        const rooms = await Room.find(query)
+            .populate('updatedBy', 'firstName lastName username')
+            .sort({ floor: 1, roomNumber: 1 });
 
         // Update current status based on time for each room
         const updatedRooms = rooms.map(room => {
@@ -32,7 +133,35 @@ router.get("/", authenticateToken, async (req, res) => {
     }
 });
 
-// Get specific room details
+/**
+ * @swagger
+ * /api/rooms/{roomNumber}:
+ *   get:
+ *     summary: Get specific room details
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Room number
+ *     responses:
+ *       200:
+ *         description: Room details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Room'
+ *       404:
+ *         description: Room not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.get("/:roomNumber", authenticateToken, async (req, res) => {
     try {
         const room = await Room.findOne({ roomNumber: req.params.roomNumber })
@@ -53,7 +182,51 @@ router.get("/:roomNumber", authenticateToken, async (req, res) => {
     }
 });
 
-// Get room schedule for specific date
+/**
+ * @swagger
+ * /api/rooms/{roomNumber}/schedule:
+ *   get:
+ *     summary: Get room schedule for specific date
+ *     tags: [Rooms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Room number
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Room schedule
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 roomNumber:
+ *                   type: string
+ *                 date:
+ *                   type: string
+ *                   format: date
+ *                 schedule:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       404:
+ *         description: Room not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
 router.get("/:roomNumber/schedule", authenticateToken, async (req, res) => {
     try {
         const { date } = req.query; // Format: YYYY-MM-DD
@@ -79,7 +252,54 @@ router.get("/:roomNumber/schedule", authenticateToken, async (req, res) => {
 // === ADMIN ROUTES ===
 router.use("/admin", authenticateToken, authorizeRoles("admin"));
 
-// Admin: Update room status (immediate or scheduled)
+/**
+ * @swagger
+ * /api/rooms/admin/{roomNumber}/status:
+ *   patch:
+ *     summary: Update room status (Admin only)
+ *     tags: [Rooms - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Room number
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [free, occupied, reserved, maintenance]
+ *               startTime:
+ *                 type: string
+ *                 description: Start time for scheduled update (HH:MM)
+ *               endTime:
+ *                 type: string
+ *                 description: End time for scheduled update (HH:MM)
+ *               purpose:
+ *                 type: string
+ *                 description: Purpose of reservation
+ *             required:
+ *               - status
+ *     responses:
+ *       200:
+ *         description: Room status updated successfully
+ *       400:
+ *         description: Invalid status
+ *       404:
+ *         description: Room not found
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Server error
+ */
 router.patch("/admin/:roomNumber/status", async (req, res) => {
     try {
         const { status, startTime, endTime, purpose } = req.body;
@@ -132,10 +352,50 @@ router.patch("/admin/:roomNumber/status", async (req, res) => {
     }
 });
 
-// Admin: Bulk update room statuses
+/**
+ * @swagger
+ * /api/rooms/admin/bulk-update:
+ *   patch:
+ *     summary: Bulk update room statuses (Admin only)
+ *     tags: [Rooms - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               updates:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     roomNumber:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       enum: [free, occupied, reserved, maintenance]
+ *                     startTime:
+ *                       type: string
+ *                     endTime:
+ *                       type: string
+ *                     purpose:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Bulk update completed
+ *       400:
+ *         description: Invalid request format
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Server error
+ */
 router.patch("/admin/bulk-update", async (req, res) => {
     try {
-        const { updates } = req.body; // Array of { roomNumber, status, startTime?, endTime?, purpose? }
+        const { updates } = req.body;
 
         if (!Array.isArray(updates)) {
             return res.status(400).json({ message: "Updates must be an array" });
@@ -193,13 +453,55 @@ router.patch("/admin/bulk-update", async (req, res) => {
     }
 });
 
-// Admin: Create new room
+/**
+ * @swagger
+ * /api/rooms/admin:
+ *   post:
+ *     summary: Create new room (Admin only)
+ *     tags: [Rooms - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               roomNumber:
+ *                 type: string
+ *               floor:
+ *                 type: number
+ *               building:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *               capacity:
+ *                 type: number
+ *               equipment:
+ *                 type: string
+ *             required:
+ *               - roomNumber
+ *               - floor
+ *               - type
+ *               - capacity
+ *               - equipment
+ *     responses:
+ *       201:
+ *         description: Room created successfully
+ *       400:
+ *         description: Invalid input or room already exists
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Server error
+ */
 router.post("/admin", async (req, res) => {
     try {
-        const { roomNumber, floor, type, capacity, equipment } = req.body;
+        const { roomNumber, floor, building, type, capacity, equipment } = req.body;
 
         // Validation
-        if (!roomNumber || !floor || !type || capacity === undefined || !equipment) {
+        if (!roomNumber || floor === undefined || !type || capacity === undefined || !equipment) {
             return res.status(400).json({
                 message: "All fields are required: roomNumber, floor, type, capacity, equipment"
             });
@@ -214,6 +516,7 @@ router.post("/admin", async (req, res) => {
         const newRoom = new Room({
             roomNumber,
             floor: parseInt(floor),
+            building: building || 'Main Building',
             type,
             capacity: parseInt(capacity),
             equipment,
@@ -243,10 +546,67 @@ router.post("/admin", async (req, res) => {
     }
 });
 
-// Admin: Update room details
+/**
+ * @swagger
+ * /api/rooms/admin/{roomNumber}:
+ *   put:
+ *     summary: Update room details (Admin only)
+ *     tags: [Rooms - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               type:
+ *                 type: string
+ *               capacity:
+ *                 type: number
+ *               equipment:
+ *                 type: string
+ *               building:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Room updated successfully
+ *       404:
+ *         description: Room not found
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Server error
+ *   delete:
+ *     summary: Delete room (Admin only)
+ *     tags: [Rooms - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Room deleted successfully
+ *       404:
+ *         description: Room not found
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Server error
+ */
 router.put("/admin/:roomNumber", async (req, res) => {
     try {
-        const { type, capacity, equipment } = req.body;
+        const { type, capacity, equipment, building } = req.body;
 
         const room = await Room.findOne({ roomNumber: req.params.roomNumber });
         if (!room) {
@@ -256,6 +616,7 @@ router.put("/admin/:roomNumber", async (req, res) => {
         if (type) room.type = type;
         if (capacity !== undefined) room.capacity = parseInt(capacity);
         if (equipment) room.equipment = equipment;
+        if (building) room.building = building;
         room.updatedBy = req.user._id;
         room.lastUpdated = new Date();
 
@@ -271,7 +632,6 @@ router.put("/admin/:roomNumber", async (req, res) => {
     }
 });
 
-// Admin: Delete room
 router.delete("/admin/:roomNumber", async (req, res) => {
     try {
         const room = await Room.findOne({ roomNumber: req.params.roomNumber });
@@ -299,7 +659,41 @@ router.delete("/admin/:roomNumber", async (req, res) => {
     }
 });
 
-// Admin: Get room statistics
+/**
+ * @swagger
+ * /api/rooms/admin/stats:
+ *   get:
+ *     summary: Get room statistics (Admin only)
+ *     tags: [Rooms - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Room statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: number
+ *                 free:
+ *                   type: number
+ *                 occupied:
+ *                   type: number
+ *                 reserved:
+ *                   type: number
+ *                 maintenance:
+ *                   type: number
+ *                 byFloor:
+ *                   type: object
+ *                 byType:
+ *                   type: object
+ *       403:
+ *         description: Admin access required
+ *       500:
+ *         description: Server error
+ */
 router.get("/admin/stats", async (req, res) => {
     try {
         const totalRooms = await Room.countDocuments();
@@ -318,6 +712,11 @@ router.get("/admin/stats", async (req, res) => {
             { $sort: { count: -1 } }
         ]);
 
+        const roomsByBuilding = await Room.aggregate([
+            { $group: { _id: "$building", count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]);
+
         res.json({
             total: totalRooms,
             free: freeRooms,
@@ -325,10 +724,15 @@ router.get("/admin/stats", async (req, res) => {
             reserved: reservedRooms,
             maintenance: maintenanceRooms,
             byFloor: roomsByFloor.reduce((acc, item) => {
-                acc[`Floor ${item._id}`] = item.count;
+                const floorName = item._id === 0 ? 'Ground Floor' : `Floor ${item._id}`;
+                acc[floorName] = item.count;
                 return acc;
             }, {}),
             byType: roomsByType.reduce((acc, item) => {
+                acc[item._id] = item.count;
+                return acc;
+            }, {}),
+            byBuilding: roomsByBuilding.reduce((acc, item) => {
                 acc[item._id] = item.count;
                 return acc;
             }, {})

@@ -10,6 +10,7 @@ const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const adminRoutes = require("./routes/admin");
 const todoRoutes = require("./routes/todos");
+const roomRoutes = require("./routes/rooms");
 
 const app = express();
 
@@ -22,7 +23,7 @@ const swaggerOptions = {
     info: {
       title: "Campus Management API",
       version: "1.0.0",
-      description: "A comprehensive campus management system with authentication, student management, and todo functionality",
+      description: "A comprehensive campus management system with authentication, student management, todo functionality, and room management",
     },
     servers: [
       {
@@ -65,14 +66,19 @@ app.use(cors({
 // Swagger UI - accessible at /api-docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
-// Database connection
-connectMainDB();
+// Database connection and room initialization
+connectMainDB().then(async () => {
+  // Initialize default rooms if none exist
+  const Room = require("./models/Room");
+  await Room.initializeDefaultRooms();
+});
 
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/todos", todoRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -88,7 +94,14 @@ app.get("/", (req, res) => {
   res.json({ 
     message: "Campus Management API is running",
     docs: `http://localhost:${PORT}/api-docs`,
-    frontend: "http://localhost:5173"
+    frontend: "http://localhost:5173",
+    endpoints: {
+      auth: "/api/auth",
+      users: "/api/users", 
+      admin: "/api/admin",
+      todos: "/api/todos",
+      rooms: "/api/rooms"
+    }
   });
 });
 
@@ -110,9 +123,10 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Backend API running on http://localhost:${PORT}`);
   console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
   console.log(`⚛️  Frontend (Vite): http://localhost:5173`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🏢 Room management: /api/rooms`);
 });

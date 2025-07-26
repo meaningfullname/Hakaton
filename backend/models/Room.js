@@ -34,37 +34,43 @@ const roomSchema = new mongoose.Schema({
     floor: {
         type: Number,
         required: true,
-        min: 1,
+        min: 0,
         max: 10
+    },
+    building: {
+        type: String,
+        required: true,
+        default: 'Main Building'
     },
     type: {
         type: String,
         required: true,
         enum: [
-            'Лекционная аудитория',
-            'Семинарская аудитория',
-            'Компьютерный класс',
-            'Лаборатория физики',
-            'Химическая лаборатория',
-            'Актовый зал',
-            'Библиотека',
-            'Кабинет декана',
-            'Столовая',
-            'Лаборатория ИТ',
-            'Конференц-зал',
-            'Лаборатория электроники',
-            'Мультимедийная аудитория',
-            'Кабинет математики',
-            'Языковая лаборатория',
-            'Кафедра программирования',
-            'Исследовательская лаборатория',
-            'Переговорная',
-            'Архив',
-            'Серверная',
-            'Кабинет ректора',
-            'Зал заседаний',
-            'Методический кабинет',
-            'Аудитория курсового проектирования'
+            'Lecture Theatre',
+            'Seminar Room',
+            'Computer Lab',
+            'Physics Laboratory',
+            'Chemistry Laboratory',
+            'Assembly Hall',
+            'Library',
+            'Dean\'s Office',
+            'Cafeteria',
+            'IT Laboratory',
+            'Conference Room',
+            'Electronics Laboratory',
+            'Multimedia Room',
+            'Mathematics Room',
+            'Language Laboratory',
+            'Programming Department',
+            'Research Laboratory',
+            'Meeting Room',
+            'Archive',
+            'Server Room',
+            'Vice-Chancellor\'s Office',
+            'Council Chamber',
+            'Teaching Resource Centre',
+            'Design Studio',
+            'Study Room'
         ]
     },
     capacity: {
@@ -146,51 +152,52 @@ roomSchema.statics.getRoomsByFloor = function(floor) {
         .sort({ roomNumber: 1 });
 };
 
-// Static method to initialize default rooms
+// Static method to initialize default rooms for UK university
 roomSchema.statics.initializeDefaultRooms = async function() {
     const defaultRooms = [
-        // Floor 1
-        { roomNumber: '101', floor: 1, type: 'Лекционная аудитория', capacity: 80, equipment: 'Проектор, доска, кондиционер' },
-        { roomNumber: '102', floor: 1, type: 'Семинарская аудитория', capacity: 40, equipment: 'Доска, столы' },
-        { roomNumber: '103', floor: 1, type: 'Компьютерный класс', capacity: 25, equipment: '25 ПК, проектор' },
-        { roomNumber: '104', floor: 1, type: 'Лаборатория физики', capacity: 30, equipment: 'Лабораторное оборудование' },
-        { roomNumber: '105', floor: 1, type: 'Химическая лаборатория', capacity: 35, equipment: 'Вытяжки, реактивы' },
-        { roomNumber: '106', floor: 1, type: 'Актовый зал', capacity: 200, equipment: 'Сцена, звуковая система' },
-        { roomNumber: '107', floor: 1, type: 'Библиотека', capacity: 50, equipment: 'Читальный зал' },
-        { roomNumber: '108', floor: 1, type: 'Кабинет декана', capacity: 10, equipment: 'Переговорная зона' },
-        { roomNumber: '109', floor: 1, type: 'Столовая', capacity: 100, equipment: 'Кухня, столы' },
+        // Ground Floor
+        { roomNumber: 'G01', floor: 0, building: 'Main Building', type: 'Lecture Theatre', capacity: 200, equipment: 'Projector, microphone system, tiered seating' },
+        { roomNumber: 'G02', floor: 0, building: 'Main Building', type: 'Assembly Hall', capacity: 300, equipment: 'Stage, sound system, lighting' },
+        { roomNumber: 'G03', floor: 0, building: 'Main Building', type: 'Cafeteria', capacity: 150, equipment: 'Kitchen facilities, dining tables' },
+        { roomNumber: 'G04', floor: 0, building: 'Main Building', type: 'Library', capacity: 100, equipment: 'Reading areas, computer terminals' },
+        { roomNumber: 'G05', floor: 0, building: 'Main Building', type: 'Computer Lab', capacity: 30, equipment: '30 PCs, projector, network access' },
 
-        // Floor 2
-        { roomNumber: '201', floor: 2, type: 'Лекционная аудитория', capacity: 90, equipment: 'Проектор, интерактивная доска' },
-        { roomNumber: '202', floor: 2, type: 'Семинарская аудитория', capacity: 45, equipment: 'Модульные столы' },
-        { roomNumber: '203', floor: 2, type: 'Лаборатория ИТ', capacity: 20, equipment: 'Серверы, сетевое оборудование' },
-        { roomNumber: '204', floor: 2, type: 'Конференц-зал', capacity: 60, equipment: 'Видеосвязь, презентационное оборудование' },
-        { roomNumber: '205', floor: 2, type: 'Лаборатория электроники', capacity: 25, equipment: 'Осциллографы, паяльные станции' },
-        { roomNumber: '206', floor: 2, type: 'Мультимедийная аудитория', capacity: 70, equipment: 'Интерактивные панели' },
-        { roomNumber: '207', floor: 2, type: 'Кабинет математики', capacity: 35, equipment: 'Специализированные программы' },
-        { roomNumber: '208', floor: 2, type: 'Языковая лаборатория', capacity: 30, equipment: 'Аудиооборудование, наушники' },
-        { roomNumber: '209', floor: 2, type: 'Лекционная аудитория', capacity: 100, equipment: 'Амфитеатр' },
+        // First Floor
+        { roomNumber: '101', floor: 1, building: 'Main Building', type: 'Lecture Theatre', capacity: 120, equipment: 'Interactive whiteboard, projector, audio system' },
+        { roomNumber: '102', floor: 1, building: 'Main Building', type: 'Seminar Room', capacity: 25, equipment: 'Modular tables, whiteboard' },
+        { roomNumber: '103', floor: 1, building: 'Main Building', type: 'Computer Lab', capacity: 25, equipment: '25 workstations, software suite' },
+        { roomNumber: '104', floor: 1, building: 'Main Building', type: 'Physics Laboratory', capacity: 20, equipment: 'Laboratory benches, scientific equipment' },
+        { roomNumber: '105', floor: 1, building: 'Main Building', type: 'Chemistry Laboratory', capacity: 24, equipment: 'Fume cupboards, safety equipment' },
+        { roomNumber: '106', floor: 1, building: 'Main Building', type: 'Study Room', capacity: 12, equipment: 'Study desks, quiet environment' },
 
-        // Floor 3
-        { roomNumber: '301', floor: 3, type: 'Кафедра программирования', capacity: 15, equipment: 'Преподавательские места' },
-        { roomNumber: '302', floor: 3, type: 'Исследовательская лаборатория', capacity: 20, equipment: 'Научное оборудование' },
-        { roomNumber: '303', floor: 3, type: 'Переговорная', capacity: 12, equipment: 'Круглый стол, видеосвязь' },
-        { roomNumber: '304', floor: 3, type: 'Архив', capacity: 0, equipment: 'Документооборот' },
-        { roomNumber: '305', floor: 3, type: 'Серверная', capacity: 0, equipment: 'IT-инфраструктура' },
-        { roomNumber: '306', floor: 3, type: 'Кабинет ректора', capacity: 8, equipment: 'Приёмная, кабинет' },
-        { roomNumber: '307', floor: 3, type: 'Зал заседаний', capacity: 30, equipment: 'Большой стол, презентационное оборудование' },
-        { roomNumber: '308', floor: 3, type: 'Методический кабинет', capacity: 25, equipment: 'Учебные материалы' },
-        { roomNumber: '309', floor: 3, type: 'Аудитория курсового проектирования', capacity: 40, equipment: 'Чертёжные столы' }
+        // Second Floor
+        { roomNumber: '201', floor: 2, building: 'Main Building', type: 'Lecture Theatre', capacity: 80, equipment: 'Smart board, video conferencing' },
+        { roomNumber: '202', floor: 2, building: 'Main Building', type: 'Seminar Room', capacity: 20, equipment: 'Flexible seating, presentation screen' },
+        { roomNumber: '203', floor: 2, building: 'Main Building', type: 'IT Laboratory', capacity: 18, equipment: 'High-spec computers, development software' },
+        { roomNumber: '204', floor: 2, building: 'Main Building', type: 'Conference Room', capacity: 16, equipment: 'Video conferencing, presentation facilities' },
+        { roomNumber: '205', floor: 2, building: 'Main Building', type: 'Language Laboratory', capacity: 24, equipment: 'Audio equipment, language software' },
+        { roomNumber: '206', floor: 2, building: 'Main Building', type: 'Multimedia Room', capacity: 30, equipment: 'Interactive displays, media equipment' },
+
+        // Third Floor
+        { roomNumber: '301', floor: 3, building: 'Main Building', type: 'Research Laboratory', capacity: 15, equipment: 'Specialized research equipment' },
+        { roomNumber: '302', floor: 3, building: 'Main Building', type: 'Programming Department', capacity: 10, equipment: 'Faculty offices, meeting space' },
+        { roomNumber: '303', floor: 3, building: 'Main Building', type: 'Meeting Room', capacity: 8, equipment: 'Conference table, video link' },
+        { roomNumber: '304', floor: 3, building: 'Main Building', type: 'Dean\'s Office', capacity: 6, equipment: 'Executive office, reception area' },
+        { roomNumber: '305', floor: 3, building: 'Main Building', type: 'Server Room', capacity: 0, equipment: 'IT infrastructure, climate control' },
+        { roomNumber: '306', floor: 3, building: 'Main Building', type: 'Vice-Chancellor\'s Office', capacity: 8, equipment: 'Executive suite, meeting area' },
+        { roomNumber: '307', floor: 3, building: 'Main Building', type: 'Council Chamber', capacity: 40, equipment: 'Formal meeting setup, recording facilities' },
+        { roomNumber: '308', floor: 3, building: 'Main Building', type: 'Teaching Resource Centre', capacity: 20, equipment: 'Educational materials, printing facilities' },
+        { roomNumber: '309', floor: 3, building: 'Main Building', type: 'Design Studio', capacity: 25, equipment: 'Drawing tables, design software' }
     ];
 
     try {
         const existingRooms = await this.countDocuments();
         if (existingRooms === 0) {
             await this.insertMany(defaultRooms);
-            console.log('Default rooms initialized successfully');
+            console.log('✅ Default rooms initialized successfully for UK university');
         }
     } catch (error) {
-        console.error('Error initializing default rooms:', error);
+        console.error('❌ Error initializing default rooms:', error);
     }
 };
 
