@@ -64,6 +64,7 @@ connectMainDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/todos", todoRoutes);
 app.use(express.static(path.join(__dirname, "../backend/taiwindcss4/dist")));
 
 app.get("*", (req, res) => {
