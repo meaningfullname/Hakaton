@@ -1,7 +1,8 @@
+const BASE_URL = 'https://hakaton-production-a902.up.railway.app';
 
 const apiService = {
     login: async (credentials) => {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials)
@@ -10,14 +11,14 @@ const apiService = {
     },
     
     getProfile: async (token) => {
-      const res = await fetch('/api/auth/profile', {
+      const res = await fetch(`${BASE_URL}/api/auth/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       return res.json();
     },
     
     updateProfile: async (token, userId, data) => {
-      const res = await fetch(`/api/users/${userId}`, {
+      const res = await fetch(`${BASE_URL}/api/users/${userId}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -26,7 +27,7 @@ const apiService = {
     },
     
     changePassword: async (token, data) => {
-      const res = await fetch('/api/auth/change-password', {
+      const res = await fetch(`${BASE_URL}/api/auth/change-password`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -36,7 +37,7 @@ const apiService = {
     
     // Admin APIs
     getStats: async (token) => {
-      const res = await fetch('/api/admin/stats', {
+      const res = await fetch(`${BASE_URL}/api/admin/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch stats');
@@ -44,7 +45,7 @@ const apiService = {
     },
     
     getStudents: async (token, limit = 50, page = 1) => {
-      const res = await fetch(`/api/admin/students?limit=${limit}&page=${page}`, {
+      const res = await fetch(`${BASE_URL}/api/admin/students?limit=${limit}&page=${page}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch students');
@@ -52,7 +53,7 @@ const apiService = {
     },
     
     createStudent: async (token, data) => {
-      const res = await fetch('/api/admin/students', {
+      const res = await fetch(`${BASE_URL}/api/admin/students`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -62,7 +63,7 @@ const apiService = {
     },
     
     updateStudent: async (token, id, data) => {
-      const res = await fetch(`/api/admin/students/${id}`, {
+      const res = await fetch(`${BASE_URL}/api/admin/students/${id}`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -72,7 +73,7 @@ const apiService = {
     },
     
     deleteStudent: async (token, id) => {
-      const res = await fetch(`/api/admin/students/${id}`, {
+      const res = await fetch(`${BASE_URL}/api/admin/students/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -82,7 +83,7 @@ const apiService = {
   
     // Get single student by ID
     getStudent: async (token, id) => {
-      const res = await fetch(`/api/users/${id}`, {
+      const res = await fetch(`${BASE_URL}/api/users/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch student');
