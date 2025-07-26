@@ -1,49 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
-import Layout from './components/layout/Layout';
-import LoginPage from './components/pages/LoginPage';
-import HomePage from './components/pages/HomePage';
-import TodoPage from './components/pages/TodoPage';
-import RoomsPage from './components/pages/RoomsPage'; // Import the new RoomsPage
-import MapPage from './components/pages/MapPage';
-import PhoenixPage from './components/pages/PhoenixPage';
-import ClubsPage from './components/pages/ClubsPage';
-import ProfilePage from './components/pages/ProfilePage';
-import AdminDashboard from './components/pages/AdminDashboard';
+import React, { useState } from 'react';
+import { AuthProvider } from './src/contexts/AuthContext';
+import { TodoProvider } from './src/contexts/TodoContext';
+import Layout from './src/components/layout/Layout';
+import LoginPage from './src/components/pages/LoginPage';
+import HomePage from './src/components/pages/HomePage';
+import TodoListPage from './src/components/pages/TodoListPage';
+import RoomsPage from './src/components/pages/RoomsPage';
+import MapPage from './src/components/pages/MapPage';
+import PhoenixFocusPage from './src/components/pages/PhoenixFocusPage';
+import ClubsPage from './src/components/pages/ClubsPage';
+import ProfilePage from './src/components/pages/ProfilePage';
+import AdminPanelPage from './src/components/pages/AdminPanelPage';
+import { useAuth } from './src/contexts/AuthContext';
 
-const App = () => {
+const AppContent = () => {
+  const { user } = useAuth();
   const [currentView, setCurrentView] = useState('home');
+
+  // If user is not logged in, show login page
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  // If user is admin, show admin panel
+  if (user.role === 'admin') {
+    return <AdminPanelPage />;
+  }
 
   const renderCurrentView = () => {
     switch (currentView) {
       case 'home':
         return <HomePage setCurrentView={setCurrentView} />;
       case 'todo':
-        return <TodoPage />;
-      case 'rooms': // Add the rooms case
+        return <TodoListPage />;
+      case 'rooms':
         return <RoomsPage />;
       case 'map':
         return <MapPage />;
       case 'phoenix':
-        return <PhoenixPage />;
+        return <PhoenixFocusPage />;
       case 'clubs':
         return <ClubsPage />;
       case 'profile':
         return <ProfilePage />;
-      case 'admin':
-        return <AdminDashboard />;
       default:
         return <HomePage setCurrentView={setCurrentView} />;
     }
   };
 
   return (
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+      <Layout currentView={currentView} setCurrentView={setCurrentView}>
+        {renderCurrentView()}
+      </Layout>
+    </div>
+  );
+};
+
+const App = () => {
+  return (
     <AuthProvider>
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-        <Layout currentView={currentView} setCurrentView={setCurrentView}>
-          {renderCurrentView()}
-        </Layout>
-      </div>
+      <TodoProvider>
+        <AppContent />
+      </TodoProvider>
     </AuthProvider>
   );
 };

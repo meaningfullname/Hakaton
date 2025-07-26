@@ -1,5 +1,5 @@
 const express = require("express");
-const Room = require("../models/room");
+const Room = require("../models/Room");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
@@ -109,11 +109,26 @@ router.get("/", authenticateToken, async (req, res) => {
         const { floor, building, type, status } = req.query;
         let query = {};
 
-        // Build query filters
-        if (floor !== undefined) query.floor = parseInt(floor);
-        if (building) query.building = building;
-        if (type) query.type = type;
-        if (status) query.currentStatus = status;
+        // Build query filters with proper validation
+        if (floor !== undefined && floor !== '') {
+            const floorNumber = parseInt(floor);
+            // Проверяем, что floor является валидным числом
+            if (!isNaN(floorNumber)) {
+                query.floor = floorNumber;
+            }
+        }
+        
+        if (building && building.trim() !== '') {
+            query.building = building;
+        }
+        
+        if (type && type.trim() !== '') {
+            query.type = type;
+        }
+        
+        if (status && ['free', 'occupied', 'reserved', 'maintenance'].includes(status)) {
+            query.currentStatus = status;
+        }
 
         const rooms = await Room.find(query)
             .populate('updatedBy', 'firstName lastName username')
@@ -250,7 +265,71 @@ router.get("/:roomNumber/schedule", authenticateToken, async (req, res) => {
 });
 
 // === ADMIN ROUTES ===
-router.use("/admin", authenticateToken, authorizeRoles("admin"));
+router.post("/admin", async (req, res) => {
+    try {
+        const { roomNumber, floor, building, type, capacity, equipment } = req.body;
+
+        // Validation
+        if (!roomNumber || floor === undefined || !type || capacity === undefined || !equipment) {
+            return res.status(400).json({
+                message: "All fields are required: roomNumber, floor, type, capacity, equipment"
+            });
+        }
+
+        // Валидация числовых значений
+        const floorNumber = parseInt(floor);
+        const capacityNumber = parseInt(capacity);
+
+        if (isNaN(floorNumber) || floorNumber < 0 || floorNumber > 10) {
+            return res.status(400).json({
+                message: "Floor must be a valid number between 0 and 10"
+            });
+        }
+
+        if (isNaN(capacityNumber) || capacityNumber < 0) {
+            return res.status(400).json({
+                message: "Capacity must be a valid positive number"
+            });
+        }
+
+        // Check if room already exists
+        const existingRoom = await Room.findOne({ roomNumber });
+        if (existingRoom) {
+            return res.status(400).json({ message: "Room with this number already exists" });
+        }
+
+        const newRoom = new Room({
+            roomNumber: roomNumber.trim(),
+            floor: floorNumber,
+            building: building?.trim() || 'Main Building',
+            type: type.trim(),
+            capacity: capacityNumber,
+            equipment: equipment.trim(),
+            updatedBy: req.user._id
+        });
+
+        await newRoom.save();
+
+        // Emit socket event
+        if (req.app.locals.io) {
+            req.app.locals.io.emit('roomCreated', {
+                room: newRoom,
+                createdBy: {
+                    name: `${req.user.firstName} ${req.user.lastName}`,
+                    username: req.user.username
+                }
+            });
+        }
+
+        res.status(201).json({
+            message: "Room created successfully",
+            room: newRoom
+        });
+    } catch (error) {
+        console.error("Error creating room:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 /**
  * @swagger

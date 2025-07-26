@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, ListTodo, BarChart3, LogOut } from 'lucide-react';
+import { Users, ListTodo, BarChart3, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/apiService';
 import AdminTodoManagement from '../features/admin/AdminTodoManagement';
+import AdminRoomManagement from '../features/admin/AdminRoomManagement';
 import SuccessMessage from '../ui/SuccessMessage';
 import ErrorMessage from '../ui/ErrorMessage';
 import Button from '../ui/Button';
@@ -163,6 +164,23 @@ const AdminPanelPage = () => {
             <ListTodo size={16} />
             Todos
           </button>
+          <button
+            onClick={() => setCurrentView('rooms')}
+            style={{
+              background: currentView === 'rooms' ? 'rgba(255,255,255,0.2)' : 'none',
+              border: 'none',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <MapPin size={16} />
+            Rooms
+          </button>
         </nav>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -229,6 +247,24 @@ const AdminPanelPage = () => {
           </p>
           <Button onClick={() => setCurrentView('todos')} variant="info">
             Manage Todos
+          </Button>
+        </div>
+
+        <div style={{
+          background: 'white',
+          padding: '2rem',
+          borderRadius: '10px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          textAlign: 'center',
+          borderLeft: '4px solid #fd7e14'
+        }}>
+          <MapPin size={40} style={{ color: '#fd7e14', marginBottom: '1rem' }} />
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>Room Management</h3>
+          <p style={{ color: '#666', marginBottom: '1.5rem' }}>
+            Manage campus rooms, availability, and maintenance
+          </p>
+          <Button onClick={() => setCurrentView('rooms')} variant="warning">
+            Manage Rooms
           </Button>
         </div>
 
@@ -505,6 +541,8 @@ const AdminPanelPage = () => {
         return renderStudentManagement();
       case 'todos':
         return <AdminTodoManagement />;
+      case 'rooms':
+        return <AdminRoomManagement />;
       default:
         return renderDashboard();
     }
