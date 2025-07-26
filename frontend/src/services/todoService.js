@@ -1,161 +1,130 @@
 const BASE_URL = 'https://hakaton-production-a902.up.railway.app';
 
-const todoService = {
-  // Get user's todos with filters
-  getTodos: async (token, filters = {}) => {
-    const params = new URLSearchParams();
-    if (filters.status) params.append('status', filters.status);
-    if (filters.type) params.append('type', filters.type);
-    if (filters.priority) params.append('priority', filters.priority);
-    
-    const url = params.toString() ? `${BASE_URL}?${params}` : BASE_URL;
-    
-    const res = await fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) throw new Error('Failed to fetch todos');
-    return res.json();
-  },
-
-  // Get user's todo statistics
-  getTodoStats: async (token) => {
-    const res = await fetch(`${BASE_URL}/stats`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) throw new Error('Failed to fetch todo stats');
-    return res.json();
-  },
-
-  // Create a new personal todo
-  createTodo: async (token, todoData) => {
-    const res = await fetch(BASE_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(todoData)
-    });
-    
-    if (!res.ok) throw new Error('Failed to create todo');
-    return res.json();
-  },
-
-  // Update todo status
-  updateTodoStatus: async (token, todoId, status) => {
-    const res = await fetch(`${BASE_URL}/${todoId}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ status })
-    });
-    
-    if (!res.ok) throw new Error('Failed to update todo status');
-    return res.json();
-  },
-
-  // Update todo (full update for personal todos)
-  updateTodo: async (token, todoId, todoData) => {
-    const res = await fetch(`${BASE_URL}/${todoId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(todoData)
-    });
-    
-    if (!res.ok) throw new Error('Failed to update todo');
-    return res.json();
-  },
-
-  // Delete todo (personal todos only)
-  deleteTodo: async (token, todoId) => {
-    const res = await fetch(`${BASE_URL}/${todoId}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!res.ok) throw new Error('Failed to delete todo');
-    return res.json();
-  },
-
-  // Admin APIs
-  admin: {
-    // Get all todos (admin view)
-    getAllTodos: async (token, filters = {}, page = 1, limit = 50) => {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
-      });
+const roomService = {
+    // Get all rooms with optional filters
+    getRooms: async (token, filters = {}) => {
+      const queryParams = new URLSearchParams();
       
-      if (filters.assignedTo) params.append('assignedTo', filters.assignedTo);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.type) params.append('type', filters.type);
+      if (filters.floor !== undefined) queryParams.append('floor', filters.floor);
+      if (filters.building) queryParams.append('building', filters.building);
+      if (filters.type) queryParams.append('type', filters.type);
+      if (filters.status) queryParams.append('status', filters.status);
       
-      const res = await fetch(`${BASE_URL}/admin?${params}`, {
+      const url = `${BASE_URL}/api/rooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      
+      const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (!res.ok) throw new Error('Failed to fetch admin todos');
+      if (!res.ok) throw new Error('Failed to fetch rooms');
       return res.json();
     },
-
-    // Assign todo to student
-    assignTodo: async (token, todoData) => {
-      const res = await fetch(`${BASE_URL}/admin/assign`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(todoData)
-      });
-      
-      if (!res.ok) throw new Error('Failed to assign todo');
-      return res.json();
-    },
-
-    // Get admin todo statistics
-    getAdminStats: async (token) => {
-      const res = await fetch(`${BASE_URL}/admin/stats`, {
+  
+    // Get specific room details
+    getRoom: async (token, roomNumber) => {
+      const res = await fetch(`${BASE_URL}/api/rooms/${roomNumber}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (!res.ok) throw new Error('Failed to fetch admin todo stats');
+      if (!res.ok) throw new Error('Failed to fetch room details');
       return res.json();
     },
-
-    // Update assigned todo
-    updateAssignedTodo: async (token, todoId, todoData) => {
-      const res = await fetch(`${BASE_URL}/admin/${todoId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(todoData)
-      });
+  
+    // Get room schedule
+    getRoomSchedule: async (token, roomNumber, date = null) => {
+      const url = `${BASE_URL}/api/rooms/${roomNumber}/schedule${date ? `?date=${date}` : ''}`;
       
-      if (!res.ok) throw new Error('Failed to update assigned todo');
-      return res.json();
-    },
-
-    // Delete todo (admin can delete any todo)
-    deleteTodo: async (token, todoId) => {
-      const res = await fetch(`${BASE_URL}/admin/${todoId}`, {
-        method: 'DELETE',
+      const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (!res.ok) throw new Error('Failed to delete todo');
+      if (!res.ok) throw new Error('Failed to fetch room schedule');
       return res.json();
+    },
+  
+    // Admin functions
+    admin: {
+      // Update room status
+      updateRoomStatus: async (token, roomNumber, statusData) => {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/${roomNumber}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(statusData)
+        });
+        
+        if (!res.ok) throw new Error('Failed to update room status');
+        return res.json();
+      },
+  
+      // Bulk update room statuses
+      bulkUpdateRooms: async (token, updates) => {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/bulk-update`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ updates })
+        });
+        
+        if (!res.ok) throw new Error('Failed to bulk update rooms');
+        return res.json();
+      },
+  
+      // Create new room
+      createRoom: async (token, roomData) => {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(roomData)
+        });
+        
+        if (!res.ok) throw new Error('Failed to create room');
+        return res.json();
+      },
+  
+      // Update room details
+      updateRoom: async (token, roomNumber, roomData) => {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/${roomNumber}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(roomData)
+        });
+        
+        if (!res.ok) throw new Error('Failed to update room');
+        return res.json();
+      },
+  
+      // Delete room
+      deleteRoom: async (token, roomNumber) => {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/${roomNumber}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) throw new Error('Failed to delete room');
+        return res.json();
+      },
+  
+      // Get room statistics
+      getRoomStats: async (token) => {
+        const res = await fetch(`${BASE_URL}/api/rooms/admin/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) throw new Error('Failed to fetch room statistics');
+        return res.json();
+      }
     }
-  }
-};
-
-export default todoService;
+  };
+  
+  export default roomService;
