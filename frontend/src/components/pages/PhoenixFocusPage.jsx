@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
-import { useTimer } from './hooks/useTimer';
-import { formatTime } from '../utils/formatters';
-import PhoenixCard from '../components/features/phoenix/PhoenixCard';
-import Button from '../components/ui/Button';
+import { useTimer } from '../../hooks/useTimer';
+import { formatTime } from '../../utils/formatters';
+import PhoenixCard from '../features/phoenix/PhoenixCard';
+import Button from '../ui/Button';
 
 const PhoenixFocusPage = () => {
   const [studyTime, setStudyTime] = useState(25 * 60);

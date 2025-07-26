@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { isOverdue } from '../utils/formatters';
-import TodoColumn from '../components/features/todo/TodoColumn';
-import Button from '../components/ui/Button';
+import { isOverdue } from '../../utils/formatters';
+import TodoColumn from '../features/todo/TodoColumn';
+import Button from '../ui/Button';
 
 const TodoListPage = () => {
   const [tasks, setTasks] = useState([

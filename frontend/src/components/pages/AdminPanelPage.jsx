@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import apiService from '../services/apiService';
-import SuccessMessage from '../components/ui/SuccessMessage';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
+import { useAuth } from '../../contexts/AuthContext';
+import apiService from '../../services/apiService';
+import SuccessMessage from '../ui/SuccessMessage';
+import ErrorMessage from '../ui/ErrorMessage';
+import Button from '../ui/Button';
+import Input from '../ui/Input';
 
 const AdminPanelPage = () => {
   const { token } = useAuth();

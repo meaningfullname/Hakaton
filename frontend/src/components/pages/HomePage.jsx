@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, MapPin, Flame, BarChart3 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import DashboardTile from '../components/layout/DashboardTile';
+import { useAuth } from '../../contexts/AuthContext';
+import DashboardTile from '../layout/DashboardTile';
 
 const HomePage = ({ setCurrentView }) => {
   const { user } = useAuth();
