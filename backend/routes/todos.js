@@ -6,7 +6,96 @@ const { validateTodo, validateTodoUpdate } = require("../utils/validation");
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Todos
+ *   description: Todo management endpoints
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Todo:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [todo, doing, done]
+ *         type:
+ *           type: string
+ *           enum: [personal, assigned]
+ *         priority:
+ *           type: string
+ *           enum: [low, medium, high, urgent]
+ *         deadline:
+ *           type: string
+ *           format: date-time
+ *         createdBy:
+ *           type: string
+ *         assignedTo:
+ *           type: string
+ *         isViewed:
+ *           type: boolean
+ *         isRequired:
+ *           type: boolean
+ *         adminNotes:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *       required:
+ *         - title
+ *         - assignedTo
+ */
+
 // Get current user's todos
+/**
+ * @swagger
+ * /api/todos:
+ *   get:
+ *     summary: Get current user's todos
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by type
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *         description: Filter by priority
+ *     responses:
+ *       200:
+ *         description: List of todos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Todo'
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const { status, type, priority } = req.query;
@@ -18,7 +107,6 @@ router.get("/", authenticateToken, async (req, res) => {
 
     const todos = await Todo.getUserTodos(req.user._id, filters);
     
-    // Mark assigned todos as viewed
     const unviewedAssigned = todos.filter(todo => todo.type === 'assigned' && !todo.isViewed);
     if (unviewedAssigned.length > 0) {
       await Promise.all(unviewedAssigned.map(todo => todo.markAsViewed()));
@@ -32,6 +120,41 @@ router.get("/", authenticateToken, async (req, res) => {
 });
 
 // Get user's todo statistics
+/**
+ * @swagger
+ * /api/todos/stats:
+ *   get:
+ *     summary: Get user's todo statistics
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Todo statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 todo:
+ *                   type: integer
+ *                 doing:
+ *                   type: integer
+ *                 done:
+ *                   type: integer
+ *                 overdue:
+ *                   type: integer
+ *                 assigned:
+ *                   type: integer
+ *                 personal:
+ *                   type: integer
+ *                 urgent:
+ *                   type: integer
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/stats", authenticateToken, async (req, res) => {
   try {
     const userId = req.user._id;
@@ -77,6 +200,50 @@ router.get("/stats", authenticateToken, async (req, res) => {
 });
 
 // Create a new personal todo
+/**
+ * @swagger
+ * /api/todos:
+ *   post:
+ *     summary: Create a new personal todo
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *             required:
+ *               - title
+ *     responses:
+ *       201:
+ *         description: Todo created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 todo:
+ *                   $ref: '#/components/schemas/Todo'
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/", authenticateToken, async (req, res) => {
   try {
     const validation = validateTodo(req.body);
@@ -111,6 +278,52 @@ router.post("/", authenticateToken, async (req, res) => {
 });
 
 // Update todo status
+/**
+ * @swagger
+ * /api/todos/{id}/status:
+ *   patch:
+ *     summary: Update todo status
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Todo ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [todo, doing, done]
+ *             required:
+ *               - status
+ *     responses:
+ *       200:
+ *         description: Todo status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 todo:
+ *                   $ref: '#/components/schemas/Todo'
+ *       400:
+ *         description: Invalid status
+ *       404:
+ *         description: Todo not found
+ *       500:
+ *         description: Internal server error
+ */
 router.patch("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { status } = req.body;
@@ -144,6 +357,57 @@ router.patch("/:id/status", authenticateToken, async (req, res) => {
 });
 
 // Update todo (only personal todos can be fully updated by user)
+/**
+ * @swagger
+ * /api/todos/{id}:
+ *   put:
+ *     summary: Update a personal todo
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Todo ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *     responses:
+ *       200:
+ *         description: Todo updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 todo:
+ *                   $ref: '#/components/schemas/Todo'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Personal todo not found
+ *       500:
+ *         description: Internal server error
+ */
 router.put("/:id", authenticateToken, async (req, res) => {
   try {
     const validation = validateTodoUpdate(req.body);
@@ -154,7 +418,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
     const todo = await Todo.findOne({ 
       _id: req.params.id, 
       assignedTo: req.user._id,
-      type: 'personal' // Only personal todos can be fully updated
+      type: 'personal'
     });
 
     if (!todo) {
@@ -185,6 +449,36 @@ router.put("/:id", authenticateToken, async (req, res) => {
 });
 
 // Delete todo (only personal todos)
+/**
+ * @swagger
+ * /api/todos/{id}:
+ *   delete:
+ *     summary: Delete a personal todo
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Todo ID
+ *     responses:
+ *       200:
+ *         description: Todo deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Personal todo not found
+ *       500:
+ *         description: Internal server error
+ */
 router.delete("/:id", authenticateToken, async (req, res) => {
   try {
     const todo = await Todo.findOne({ 
@@ -210,6 +504,63 @@ router.delete("/:id", authenticateToken, async (req, res) => {
 router.use("/admin", authenticateToken, authorizeRoles("admin"));
 
 // Get all todos (admin view)
+/**
+ * @swagger
+ * /api/todos/admin:
+ *   get:
+ *     summary: Get all todos (admin only)
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: assignedTo
+ *         schema:
+ *           type: string
+ *         description: Filter by assigned user ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by type
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of todos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 todos:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Todo'
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 pages:
+ *                   type: integer
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/admin", async (req, res) => {
   try {
     const { assignedTo, status, type, page = 1, limit = 50 } = req.query;
@@ -239,6 +590,60 @@ router.get("/admin", async (req, res) => {
 });
 
 // Admin assign todo to student
+/**
+ * @swagger
+ * /api/todos/admin/assign:
+ *   post:
+ *     summary: Assign todo to student (admin only)
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               studentId:
+ *                 type: string
+ *                 description: Student ID or database ID
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *               isRequired:
+ *                 type: boolean
+ *               adminNotes:
+ *                 type: string
+ *             required:
+ *               - studentId
+ *               - title
+ *     responses:
+ *       201:
+ *         description: Todo assigned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 todo:
+ *                   $ref: '#/components/schemas/Todo'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Student not found
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/admin/assign", async (req, res) => {
   try {
     const validation = validateTodo(req.body);
@@ -248,7 +653,6 @@ router.post("/admin/assign", async (req, res) => {
 
     const { studentId } = req.body;
     
-    // Verify student exists
     const student = await User.findOne({ 
       $or: [{ _id: studentId }, { studentId: studentId }],
       role: 'student',
@@ -289,6 +693,39 @@ router.post("/admin/assign", async (req, res) => {
 });
 
 // Admin get todo statistics
+/**
+ * @swagger
+ * /api/todos/admin/stats:
+ *   get:
+ *     summary: Get admin todo statistics
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Admin statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 assigned:
+ *                   type: integer
+ *                 personal:
+ *                   type: integer
+ *                 completed:
+ *                   type: integer
+ *                 overdue:
+ *                   type: integer
+ *                 urgent:
+ *                   type: integer
+ *                 unviewedAssigned:
+ *                   type: integer
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/admin/stats", async (req, res) => {
   try {
     const [
@@ -328,6 +765,59 @@ router.get("/admin/stats", async (req, res) => {
 });
 
 // Admin update assigned todo
+/**
+ * @swagger
+ * /api/todos/admin/{id}:
+ *   put:
+ *     summary: Update assigned todo (admin only)
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Todo ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high, urgent]
+ *               isRequired:
+ *                 type: boolean
+ *               adminNotes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Todo updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 todo:
+ *                   $ref: '#/components/schemas/Todo'
+ *       404:
+ *         description: Assigned todo not found
+ *       500:
+ *         description: Internal server error
+ */
 router.put("/admin/:id", async (req, res) => {
   try {
     const todo = await Todo.findOne({ 
@@ -366,6 +856,36 @@ router.put("/admin/:id", async (req, res) => {
 });
 
 // Admin delete todo
+/**
+ * @swagger
+ * /api/todos/admin/{id}:
+ *   delete:
+ *     summary: Delete any todo (admin only)
+ *     tags: [Todos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Todo ID
+ *     responses:
+ *       200:
+ *         description: Todo deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Todo not found
+ *       500:
+ *         description: Internal server error
+ */
 router.delete("/admin/:id", async (req, res) => {
   try {
     const todo = await Todo.findById(req.params.id);

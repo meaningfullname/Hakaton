@@ -1,3 +1,4 @@
+
 const apiService = {
     login: async (credentials) => {
       const res = await fetch('/api/auth/login', {
@@ -38,13 +39,15 @@ const apiService = {
       const res = await fetch('/api/admin/stats', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (!res.ok) throw new Error('Failed to fetch stats');
       return res.json();
     },
     
-    getStudents: async (token, limit = 50) => {
-      const res = await fetch(`/api/admin/students?limit=${limit}`, {
+    getStudents: async (token, limit = 50, page = 1) => {
+      const res = await fetch(`/api/admin/students?limit=${limit}&page=${page}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (!res.ok) throw new Error('Failed to fetch students');
       return res.json();
     },
     
@@ -54,6 +57,7 @@ const apiService = {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      if (!res.ok) throw new Error('Failed to create student');
       return res.json();
     },
     
@@ -63,6 +67,7 @@ const apiService = {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+      if (!res.ok) throw new Error('Failed to update student');
       return res.json();
     },
     
@@ -71,6 +76,16 @@ const apiService = {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (!res.ok) throw new Error('Failed to delete student');
+      return res.json();
+    },
+  
+    // Get single student by ID
+    getStudent: async (token, id) => {
+      const res = await fetch(`/api/users/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch student');
       return res.json();
     }
   };

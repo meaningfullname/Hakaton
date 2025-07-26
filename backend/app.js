@@ -9,6 +9,7 @@ const { connectMainDB } = require("./config/config");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const adminRoutes = require("./routes/admin");
+const todoRoutes = require("./routes/todos");
 
 const app = express();
 
@@ -19,9 +20,9 @@ const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Auth System API",
+      title: "Campus Management API",
       version: "1.0.0",
-      description: "A simple authentication system with JWT and MongoDB",
+      description: "A comprehensive campus management system with authentication, student management, and todo functionality",
     },
     servers: [
       {
@@ -44,67 +45,74 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ["./routes/*.js"], // paths to files containing OpenAPI definitions
+  apis: ["./routes/*.js"],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
 
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "../frontend/public")));
-app.use(cors());
 
-// Swagger UI
+// CORS configuration for development
+app.use(cors({
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Swagger UI - accessible at /api-docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Database connection
 connectMainDB();
 
-// Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/todos", todoRoutes);
-app.use(express.static(path.join(__dirname, "../backend/taiwindcss4/dist")));
 
-app.get("*", (req, res) => {
-  if (req.originalUrl.startsWith("/api/")) return res.status(404).json({message: "API route not found"});
-  res.sendFile(path.join(__dirname, "../backend/taiwindcss4/dist/index.html"));
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    service: "Campus Management API"
+  });
 });
 
-// Serve frontend
+// Development mode - API only, frontend is served by Vite
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/public", "index.html"));
+  res.json({ 
+    message: "Campus Management API is running",
+    docs: `http://localhost:${PORT}/api-docs`,
+    frontend: "http://localhost:5173"
+  });
 });
 
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/public", "login.html"));
+// Handle API 404s
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ message: "API route not found" });
 });
 
-app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/public", "register.html"));
-});
-
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/public", "admin.html"));
-});
-
-app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/public", "dashboard.html"));
-});
-
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
-
-// Error handler
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+  console.error("Error:", err.stack);
+  
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
+  res.status(err.status || 500).json({
+    message: err.message || "Something went wrong!",
+    ...(isDevelopment && { stack: err.stack })
+  });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Swagger documentation available at http://localhost:${PORT}/api-docs`);
+  console.log(`🚀 Backend API running on http://localhost:${PORT}`);
+  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+  console.log(`⚛️  Frontend (Vite): http://localhost:5173`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
