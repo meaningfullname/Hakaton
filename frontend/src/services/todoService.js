@@ -1,4 +1,4 @@
-const BASE_URL = '/api/todos';
+const BASE_URL = 'https://hakaton-production-a902.up.railway.app';
 
 const todoService = {
   // Get user's todos with filters
