@@ -4,10 +4,13 @@
   "description": "A comprehensive student management system with JWT authentication and role-based access control",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "npm-run-all --parallel start:frontend start:backend",
     "dev": "nodemon app.js",
     "create-admin": "node scripts/createAdmin.js",
-    "create-admin-help": "node scripts/createAdmin.js --help"
+    "create-admin-help": "node scripts/createAdmin.js --help",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && node app.js",
+    "build": "cd frontend && npm run build"
   },
   "keywords": [
     "student-management",
