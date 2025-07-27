@@ -17,12 +17,12 @@ const AppContent = () => {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState('home');
 
-  // If user is not logged in, show login page
+
   if (!user) {
     return <LoginPage />;
   }
 
-  // If user is admin, show admin panel
+  
   if (user.role === 'admin') {
     return <AdminPanelPage />;
   }
